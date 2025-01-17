@@ -104,8 +104,6 @@ def main_menu():
         # Отображение фонового изображения
         screen_resolution()
 
-        pygame.draw.line(screen, 'white', (WIDTH // 2, 0), (WIDTH // 2, HEIGHT), width=5)
-
         # Фон кнопок и заголовка
         surf = pygame.Surface((325, 400))
         surf.fill(DARK_GRAY)
