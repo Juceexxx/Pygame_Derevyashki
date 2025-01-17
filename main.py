@@ -148,14 +148,6 @@ def main_menu():
             screen.blit(exit_button_image, (WIDTH // 2 - 150, HEIGHT // 3.279 + 210))
             draw_text('Выход', small_font, DIRTY_WHITE, screen, exit_button.x + 65, exit_button.y + 13)
             if mouse_click[0]:
-                if WIDTH // 2 - 150 <= mouse_pos[0] <= WIDTH // 2 + 150:
-                    if HEIGHT // 2 + 20 <= mouse_pos[1] <= HEIGHT // 2 + 60:
-                        game_loop()  # Начать игру
-                    elif HEIGHT // 2 + 90 <= mouse_pos[1] <= HEIGHT // 2 + 130:
-                        settings_menu()  # Открыть меню настроек
-                    elif HEIGHT // 2 + 160 <= mouse_pos[1] <= HEIGHT // 2 + 200:
-                        pygame.quit()
-                pygame.quit()
                 sys.exit()  # Выход
 
         # Обновление экрана
