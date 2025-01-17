@@ -5,7 +5,6 @@ import os
 # Инициализация Pygame
 pygame.init()
 
-# Настройки экрана
 # Получаем текущее разрешение экрана
 infoObject = pygame.display.Info()
 current_resolution = WIDTH, HEIGHT = 800, 600
@@ -57,6 +56,7 @@ background_image = load_image('background.png')
 background_image = pygame.transform.scale(background_image, current_resolution)
 
 
+# Изменение разрешения
 def screen_resolution():
     if current_resolution == (800, 600):
         screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
