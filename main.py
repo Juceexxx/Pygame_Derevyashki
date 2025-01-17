@@ -7,7 +7,7 @@ pygame.init()
 
 # Получаем текущее разрешение экрана
 infoObject = pygame.display.Info()
-current_resolution = WIDTH, HEIGHT = 800, 600
+current_resolution = WIDTH, HEIGHT = infoObject.current_w, infoObject.current_h
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Древесные Рыцари")
 
@@ -64,7 +64,7 @@ def screen_resolution():
         screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
     elif current_resolution == (1280, 720):
         screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
-    elif current_resolution == (1920, 1080):
+    elif current_resolution == (WIDTH, HEIGHT):
         screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
 
 
