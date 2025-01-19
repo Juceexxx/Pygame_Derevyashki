@@ -70,7 +70,7 @@ def screen_resolution():
 
 
 # Настройка экрана в полноэкранном режиме
-screen = pygame.display.set_mode(current_resolution)
+# screen = pygame.display.set_mode(current_resolution)
 pygame.display.set_caption('Древесные Рыцари')
 
 # Шрифты
