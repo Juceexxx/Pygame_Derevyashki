@@ -7,7 +7,8 @@ pygame.init()
 
 # Получаем текущее разрешение экрана
 infoObject = pygame.display.Info()
-current_resolution = WIDTH, HEIGHT = infoObject.current_w, infoObject.current_h
+WIDTH_1, HEIGHT_1 = infoObject.current_w, infoObject.current_h
+current_resolution = WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Древесные Рыцари")
 
@@ -64,7 +65,7 @@ def screen_resolution():
         screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
     elif current_resolution == (1280, 720):
         screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
-    elif current_resolution == (WIDTH, HEIGHT):
+    elif current_resolution == (1920, 1080):
         screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
 
 
@@ -152,75 +153,91 @@ def main_menu():
         pygame.display.flip()
 
 
-# Игровые параметры
-
-player_pos = [100, 500]  # Начальная позиция игрока
-player_size = 50  # Размер игрока
-player_speed = 5  # Скорость движения игрока
-gravity = 0.6  # Сила притяжения
-jump_strength = 20  # Сила прыжка
-is_jumping = False  # Флаг прыжка
-velocity_y = 0  # Вертикальная скорость игрока
-
-# Платформы
-platforms = [
-    pygame.Rect(50, 550, 200, 30),
-    pygame.Rect(300, 400, 200, 30),
-    pygame.Rect(600, 300, 200, 30),
-]
 
 
 # Основной игровой цикл
 def game_loop():
-    global is_jumping, velocity_y, screen
+    # Инициализация Pygame
+    pygame.init()
 
+    # Константы
+    WHITE = (255, 255, 255)
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    FPS = 60
+
+    # Создание окна
+    if current_resolution == (1920, 1080):
+        screen = pygame.display.set_mode(current_resolution, pygame.FULLSCREEN)
+        full_screen = True
+    else:
+        screen = pygame.display.set_mode(current_resolution)
+        full_screen = False
+    pygame.display.set_caption("Кубик красный")
+
+    # Переменные игрока
+    player_pos = [WIDTH // 2, HEIGHT // 2]
+    player_speed_y = 0
+    on_ground = False
+
+    # Платформы
+    platforms = [
+        pygame.Rect(100, 500, 200, 20),
+        pygame.Rect(400, 400, 200, 20),
+        pygame.Rect(600, 300, 650, 20)
+    ]
+
+    # Основной игровой цикл
+    clock = pygame.time.Clock()
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit()  # Завершение программы
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and on_ground:
+                    player_speed_y = -15
 
-        # Обработка ввода
+        # Управление движением
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            player_pos[0] -= player_speed
+            player_pos[0] -= 5
         if keys[pygame.K_RIGHT]:
-            player_pos[0] += player_speed
-        if not is_jumping:
-            if keys[pygame.K_SPACE]:  # Прыжок
-                is_jumping = True
-                velocity_y = -jump_strength
-        else:
-            # Применение силы тяжести
-            velocity_y += gravity
-            player_pos[1] += velocity_y
+            player_pos[0] += 5
 
-            # Проверка коллизии с платформами
-            for platform in platforms:
-                if player_pos[0] + player_size > platform.x and player_pos[0] < platform.x + platform.width:
-                    if player_pos[1] + player_size >= platform.y and player_pos[1] + player_size + velocity_y \
-                            <= platform.y + platform.height:
-                        player_pos[1] = platform.y - player_size
-                        is_jumping = False
-                        velocity_y = 0
+        # Проверка на границы экрана
+        if player_pos[0] < 0:
+            player_pos[0] = 0
+        if player_pos[0] > WIDTH - 50:
+            player_pos[0] = WIDTH - 50
 
-            # Проверка выхода за границы экрана
-            if player_pos[1] > HEIGHT:
-                player_pos[1] = HEIGHT - player_size
-                is_jumping = False
-                velocity_y = 0
+        # Гравитация
+        player_speed_y += 1
+        player_pos[1] += player_speed_y
 
-        # Отображение фона и игрока
-        screen.fill(WHITE)  # Заполнение экрана белым цветом
-        pygame.draw.rect(screen, "RED", (player_pos[0], player_pos[1], player_size, player_size))  # Рисуем игрока
-
-        # Рисуем платформы
+        # Проверка на столкновение с платформами
+        on_ground = False
         for platform in platforms:
-            pygame.draw.rect(screen, "GREEN", platform)
+            if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(platform) and player_speed_y >= 0:
+                player_pos[1] = platform.top - 50
+                on_ground = True
+                player_speed_y = 0
+                break
 
-        # Обновление экрана
+        # Проверка на землю
+        if not on_ground and player_pos[1] >= HEIGHT - 50:
+            player_pos[1] = HEIGHT - 50
+            on_ground = True
+            player_speed_y = 0
+
+        # Отрисовка
+        screen.fill(WHITE)
+        for platform in platforms:
+            pygame.draw.rect(screen, GREEN, platform)
+        pygame.draw.rect(screen, RED, (*player_pos, 50, 50))
+
         pygame.display.flip()
-        pygame.time.Clock().tick(60)  # Ограничение FPS
+        clock.tick(FPS)
 
 
 # Функция для продолжения игры
@@ -246,21 +263,19 @@ def settings_menu():
         # Заголовок настроек
         draw_text('Настройки', font, WHITE, screen, WIDTH // 2 - 150, 50)
 
-        # Уровень сложности ToDo перепешу
+        # Уровень сложности
         draw_text('Уровень сложности:', small_font, WHITE, screen, current_resolution[0] // 2 - 150, 150)
         draw_text('Разрешение экрана:', small_font, WHITE, screen, current_resolution[0] // 2 - 150, 350)
 
         for i, option in enumerate(difficulty_options):
             text_color = WHITE if option != difficulty_level else DIRTY_WHITE
             draw_text(option, small_font, text_color, screen, current_resolution[0] // 2 - 150, 200 + i * 40)
+
         for j, res in enumerate(resolutions):
             res_text = f'{res[0]}x{res[1]}'
             text_color = WHITE if res != current_resolution else DIRTY_WHITE
             draw_text(res_text, small_font, text_color, screen, current_resolution[0] // 2 - 150, 400 + j * 40)
 
-        # Кнопка "Входной/Полноэкранный режим"
-        mode_text = "Переключить на полноэкранный режим" if not full_screen else "Переключить на оконный режим"
-        draw_text(mode_text, small_font, WHITE, screen, current_resolution[0] // 2 - 850, HEIGHT - 1000)
 
         back_button = screen.blit(back_button_image, (10, HEIGHT - 70))
         draw_text('Назад', small_font, DIRTY_WHITE, screen, back_button.x + 100, back_button.y + 5)
@@ -274,7 +289,15 @@ def settings_menu():
             if res_rect.collidepoint(mouse_pos) and mouse_click[0]:
                 current_resolution = res
                 WIDTH, HEIGHT = current_resolution
-                screen = pygame.display.set_mode(current_resolution)
+
+                # Установка режима отображения
+                if current_resolution == (1920, 1080):
+                    screen = pygame.display.set_mode(current_resolution, pygame.FULLSCREEN)
+                    full_screen = True
+                else:
+                    screen = pygame.display.set_mode(current_resolution)
+                    full_screen = False
+
                 screen.blit(background_image, (0, 0))
 
         if back_button.collidepoint(mouse_pos):
