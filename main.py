@@ -105,6 +105,8 @@ def main_menu():
         # Отображение фонового изображения
         screen_resolution()
 
+        pygame.draw.line(screen, 'white', (WIDTH // 2, 0), (WIDTH // 2, HEIGHT), width=5)
+
         # Фон кнопок и заголовка
         surf = pygame.Surface((325, 400))
         surf.fill(DARK_GRAY)
@@ -147,6 +149,8 @@ def main_menu():
             screen.blit(exit_button_image, (WIDTH // 2 - 150, HEIGHT // 3.279 + 210))
             draw_text('Выход', small_font, DIRTY_WHITE, screen, exit_button.x + 65, exit_button.y + 13)
             if mouse_click[0]:
+                if WIDTH // 2 - 150 <= mouse_pos[0] <= WIDTH // 2 + 150:
+                 pygame.quit()
                 sys.exit()  # Выход
 
         # Обновление экрана
