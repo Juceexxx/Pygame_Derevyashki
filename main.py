@@ -21,8 +21,8 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 FPS = 60
 
-# Загрузка изображений и изменение размера
 
+# Загрузка изображений и изменение размера
 def load_image(name):
     fullname = os.path.join('Data', name)
     # если файл не существует, то выходим
@@ -61,8 +61,8 @@ background_image = pygame.transform.scale(background_image, current_resolution)
 
 # Изменение разрешения
 def screen_resolution():
-    if current_resolution == (current_resolution):
-        screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
+    screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
+
 
 # Настройка экрана в полноэкранном режиме
 # screen = pygame.display.set_mode(current_resolution)
@@ -78,7 +78,7 @@ full_screen = False
 
 
 # Функция для отображения текста на экране
-def draw_text(ext, fonts, color, surface, x, y):
+def draw_text(text, fonts, color, surface, x, y):
     textobj = fonts.render(text, True, color)
     surface.blit(textobj, (x, y))
 
@@ -142,16 +142,15 @@ def main_menu():
             draw_text('Выход', small_font, DIRTY_WHITE, screen, exit_button.x + 65, exit_button.y + 13)
             if mouse_click[0]:
                 if WIDTH // 2 - 150 <= mouse_pos[0] <= WIDTH // 2 + 150:
-                sys.exit()  # Выход
+                    sys.exit()  # Выход
 
         # Обновление экрана
         pygame.display.flip()
 
 
-
-
 # Основной игровой цикл
 def game_loop():
+    global full_screen, screen
     # Инициализация Pygame
     pygame.init()
 
@@ -260,12 +259,11 @@ def settings_menu():
 
         for j, res in enumerate(resolutions):
             if res == (1920, 1080):
-                res_rext = 'Полноэкранный режии'
+                res_text = 'Полноэкранный режии'
             else:
                 res_text = f'{res[0]}x{res[1]}'
             text_color = WHITE if res != current_resolution else DIRTY_WHITE
             draw_text(res_text, small_font, text_color, screen, current_resolution[0] // 2 - 150, 400 + j * 40)
-
 
         back_button = screen.blit(back_button_image, (10, HEIGHT - 70))
         draw_text('Назад', small_font, DIRTY_WHITE, screen, back_button.x + 100, back_button.y + 5)
