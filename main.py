@@ -12,12 +12,14 @@ current_resolution = WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Древесные Рыцари")
 
-# Цвета
+# Константы
 WHITE = (255, 255, 255)
 DIRTY_WHITE = (215, 215, 215)
 BROWN = (139, 69, 19)
 DARK_GRAY = (128, 128, 128)
-
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+FPS = 60
 
 # Загрузка изображений и изменение размера
 
@@ -59,15 +61,8 @@ background_image = pygame.transform.scale(background_image, current_resolution)
 
 # Изменение разрешения
 def screen_resolution():
-    if current_resolution == (800, 600):
+    if current_resolution == (current_resolution):
         screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
-    elif current_resolution == (1024, 768):
-        screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
-    elif current_resolution == (1280, 720):
-        screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
-    elif current_resolution == (1920, 1080):
-        screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
-
 
 # Настройка экрана в полноэкранном режиме
 # screen = pygame.display.set_mode(current_resolution)
@@ -83,7 +78,7 @@ full_screen = False
 
 
 # Функция для отображения текста на экране
-def draw_text(text, fonts, color, surface, x, y):
+def draw_text(ext, fonts, color, surface, x, y):
     textobj = fonts.render(text, True, color)
     surface.blit(textobj, (x, y))
 
@@ -99,13 +94,10 @@ def main_menu():
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
                 sys.exit()
 
         # Отображение фонового изображения
         screen_resolution()
-
-        pygame.draw.line(screen, 'white', (WIDTH // 2, 0), (WIDTH // 2, HEIGHT), width=5)
 
         # Фон кнопок и заголовка
         surf = pygame.Surface((325, 400))
@@ -150,7 +142,6 @@ def main_menu():
             draw_text('Выход', small_font, DIRTY_WHITE, screen, exit_button.x + 65, exit_button.y + 13)
             if mouse_click[0]:
                 if WIDTH // 2 - 150 <= mouse_pos[0] <= WIDTH // 2 + 150:
-                 pygame.quit()
                 sys.exit()  # Выход
 
         # Обновление экрана
@@ -163,12 +154,6 @@ def main_menu():
 def game_loop():
     # Инициализация Pygame
     pygame.init()
-
-    # Константы
-    WHITE = (255, 255, 255)
-    RED = (255, 0, 0)
-    GREEN = (0, 255, 0)
-    FPS = 60
 
     # Создание окна
     if current_resolution == (1920, 1080):
@@ -196,7 +181,6 @@ def game_loop():
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and on_ground:
@@ -259,7 +243,6 @@ def settings_menu():
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
                 sys.exit()
 
         # Отображение фона меню настроек
