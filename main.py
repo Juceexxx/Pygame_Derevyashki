@@ -103,7 +103,7 @@ def main_menu():
         surf = pygame.Surface((325, 400))
         surf.fill(DARK_GRAY)
         surf.set_alpha(200)
-        screen.blit(surf, (WIDTH // 2 - 162, HEIGHT // 6.67))
+        screen.blit(surf, (WIDTH // 2 - 162, HEIGHT // 2 - 90))
 
         # Отображение заголовка
         draw_text('Деревяшки', font, WHITE, screen, WIDTH // 2 - 150, HEIGHT // 6)
@@ -259,7 +259,10 @@ def settings_menu():
             draw_text(option, small_font, text_color, screen, current_resolution[0] // 2 - 150, 200 + i * 40)
 
         for j, res in enumerate(resolutions):
-            res_text = f'{res[0]}x{res[1]}'
+            if res == (1920, 1080):
+                res_rext = 'Полноэкранный режии'
+            else:
+                res_text = f'{res[0]}x{res[1]}'
             text_color = WHITE if res != current_resolution else DIRTY_WHITE
             draw_text(res_text, small_font, text_color, screen, current_resolution[0] // 2 - 150, 400 + j * 40)
 
