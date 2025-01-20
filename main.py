@@ -11,6 +11,7 @@ WIDTH_1, HEIGHT_1 = infoObject.current_w, infoObject.current_h
 current_resolution = WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Древесные Рыцари")
+all_sprites = pygame.sprite.Group()
 
 # Константы
 WHITE = (255, 255, 255)
@@ -20,6 +21,29 @@ DARK_GRAY = (128, 128, 128)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 FPS = 60
+
+
+class Grass(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, x, y):
+        super().__init__(all_sprites)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(x, y)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(29, 1000, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
+
+    def update(self):
+        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = self.frames[self.cur_frame]
 
 
 # Загрузка изображений и изменение размера
@@ -49,12 +73,6 @@ exit_button_image = load_image('Exit_Button.png')
 exit_button_image = pygame.transform.scale(exit_button_image, (300, 70))
 next_button_image = load_image('Next_Button.png')
 next_button_image = pygame.transform.scale(next_button_image, (300, 70))
-grass_without_wind_image = load_image('Grass_Without_Wind.png')
-# grass_without_wind_image
-grass_with_wind = load_image('Grass_With_Wind.png')
-# grass_with_wind
-grass_with_strong_wind = load_image('Grass_With_Strong_Wind.png')
-# grass_with_strong_wind
 background_image = load_image('background.png')
 background_image = pygame.transform.scale(background_image, current_resolution)
 
@@ -100,19 +118,19 @@ def main_menu():
         screen_resolution()
 
         # Фон кнопок и заголовка
-        surf = pygame.Surface((325, 400))
+        surf = pygame.Surface((330, 400))
         surf.fill(DARK_GRAY)
         surf.set_alpha(200)
-        screen.blit(surf, (WIDTH // 2 - 162, HEIGHT // 2 - 90))
+        grey_rect = screen.blit(surf, (WIDTH // 2 - 162, HEIGHT // 2 - 165))
 
         # Отображение заголовка
-        draw_text('Деревяшки', font, WHITE, screen, WIDTH // 2 - 150, HEIGHT // 6)
+        draw_text('Деревяшки', font, WHITE, screen, grey_rect.x + 15, grey_rect.y + 10)
 
         # Создание кнопок
-        start_button = screen.blit(button_image, (WIDTH // 2 - 150, HEIGHT // 3.279))
-        continue_button = screen.blit(button_image, (WIDTH // 2 - 150, HEIGHT // 3.279 + 70))
-        settings_button = screen.blit(button_image, (WIDTH // 2 - 150, HEIGHT // 3.279 + 140))
-        exit_button = screen.blit(button_image, (WIDTH // 2 - 150, HEIGHT // 3.279 + 210))
+        start_button = screen.blit(button_image, (grey_rect.x + 12, grey_rect.y + 93))
+        continue_button = screen.blit(button_image, (grey_rect.x + 12, grey_rect.y + 163))
+        settings_button = screen.blit(button_image, (grey_rect.x + 12, grey_rect.y + 233))
+        exit_button = screen.blit(button_image, (grey_rect.x + 12, grey_rect.y + 303))
         draw_text('Новая игра', small_font, DIRTY_WHITE, screen, start_button.x + 40, start_button.y + 13)
         draw_text('Продолжить', small_font, DIRTY_WHITE, screen, continue_button.x + 32, continue_button.y + 13)
         draw_text('Настройки', small_font, DIRTY_WHITE, screen, settings_button.x + 45, settings_button.y + 13)
@@ -123,26 +141,25 @@ def main_menu():
         mouse_click = pygame.mouse.get_pressed()
 
         if start_button.collidepoint(mouse_pos):
-            screen.blit(new_button_image, (WIDTH // 2 - 150, HEIGHT // 3.279))
+            screen.blit(new_button_image, (start_button.x, start_button.y))
             draw_text('Новая игра', small_font, DIRTY_WHITE, screen, start_button.x + 40, start_button.y + 13)
             if mouse_click[0]:
                 game_loop()  # Вызов функции игры
         elif continue_button.collidepoint(mouse_pos):
-            screen.blit(next_button_image, (WIDTH // 2 - 150, HEIGHT // 3.279 + 70))
+            screen.blit(next_button_image, (continue_button.x, continue_button.y))
             draw_text('Продолжить', small_font, DIRTY_WHITE, screen, continue_button.x + 32, continue_button.y + 13)
             if mouse_click[0]:
                 continue_game()  # Вызов функции продолжения игры
         elif settings_button.collidepoint(mouse_pos):
-            screen.blit(settings_button_image, (WIDTH // 2 - 150, HEIGHT // 3.279 + 140))
+            screen.blit(settings_button_image, (settings_button.x, settings_button.y))
             draw_text('Настройки', small_font, DIRTY_WHITE, screen, settings_button.x + 45, settings_button.y + 13)
             if mouse_click[0]:
                 settings_menu()  # Вызов функции настроек
         elif exit_button.collidepoint(mouse_pos):
-            screen.blit(exit_button_image, (WIDTH // 2 - 150, HEIGHT // 3.279 + 210))
+            screen.blit(exit_button_image, (exit_button.x, exit_button.y))
             draw_text('Выход', small_font, DIRTY_WHITE, screen, exit_button.x + 65, exit_button.y + 13)
             if mouse_click[0]:
-                if WIDTH // 2 - 150 <= mouse_pos[0] <= WIDTH // 2 + 150:
-                    sys.exit()  # Выход
+                sys.exit()  # Выход
 
         # Обновление экрана
         pygame.display.flip()
@@ -161,18 +178,19 @@ def game_loop():
     else:
         screen = pygame.display.set_mode(current_resolution)
         full_screen = False
+
     pygame.display.set_caption("Кубик красный")
 
     # Переменные игрока
-    player_pos = [WIDTH // 2, HEIGHT // 2]
+    player_pos = [WIDTH // 2, HEIGHT - 50]
     player_speed_y = 0
     on_ground = False
 
     # Платформы
     platforms = [
-        pygame.Rect(100, 500, 200, 20),
-        pygame.Rect(400, 400, 200, 20),
-        pygame.Rect(600, 300, 650, 20)
+        pygame.Rect(50, HEIGHT - 70, 200, 20),
+        pygame.Rect(350, HEIGHT - 140, 200, 20),
+        pygame.Rect(650, HEIGHT - 210, 650, 20)
     ]
 
     # Основной игровой цикл
@@ -219,12 +237,14 @@ def game_loop():
 
         # Отрисовка
         screen.fill(WHITE)
+        all_sprites.draw(screen)
+        all_sprites.update()
+        Grass(load_image('Grass.png'), 1, 3, 1000, 29)
         for platform in platforms:
             pygame.draw.rect(screen, GREEN, platform)
         pygame.draw.rect(screen, RED, (*player_pos, 50, 50))
-
-        pygame.display.flip()
         clock.tick(FPS)
+        pygame.display.update()  # ------------------------------- Используй update() !
 
 
 # Функция для продолжения игры
