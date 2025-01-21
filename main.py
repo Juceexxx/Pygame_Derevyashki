@@ -23,29 +23,6 @@ GREEN = (0, 255, 0)
 FPS = 60
 
 
-class Grass(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(all_sprites)
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x, y)
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(29, 1000, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
-
-    def update(self):
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.image = self.frames[self.cur_frame]
-
-
 # Загрузка изображений и изменение размера
 def load_image(name):
     fullname = os.path.join('Data', name)
@@ -73,8 +50,45 @@ exit_button_image = load_image('Exit_Button.png')
 exit_button_image = pygame.transform.scale(exit_button_image, (300, 70))
 next_button_image = load_image('Next_Button.png')
 next_button_image = pygame.transform.scale(next_button_image, (300, 70))
+grass_image = load_image('Grass.png')
+lp_go = load_image('LP_Go.png')
 background_image = load_image('background.png')
 background_image = pygame.transform.scale(background_image, current_resolution)
+
+
+class Animation(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, x, y):
+        super().__init__(all_sprites)
+        self.sheet = sheet
+        self.count = 0
+        self.count2 = 0
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(x, y)
+
+    def cut_sheet(self, sheet, columns, rows):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
+
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
+
+    def update(self):
+        if self.sheet == grass_image:
+            self.count += 1
+            if self.count == 15:
+                self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+                self.image = self.frames[self.cur_frame]
+                self.count = 0
+        else:
+            self.count2 += 1
+            if self.count2 == 15:
+                self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+                self.image = self.frames[self.cur_frame]
+                self.count2 = 0
 
 
 # Изменение разрешения
@@ -162,7 +176,7 @@ def main_menu():
                 sys.exit()  # Выход
 
         # Обновление экрана
-        pygame.display.flip()
+        pygame.display.update()
 
 
 # Основной игровой цикл
@@ -182,19 +196,21 @@ def game_loop():
     pygame.display.set_caption("Кубик красный")
 
     # Переменные игрока
-    player_pos = [WIDTH // 2, HEIGHT - 50]
+    player_pos = [WIDTH // 2, HEIGHT - 200]
     player_speed_y = 0
     on_ground = False
 
     # Платформы
     platforms = [
-        pygame.Rect(50, HEIGHT - 70, 200, 20),
-        pygame.Rect(350, HEIGHT - 140, 200, 20),
-        pygame.Rect(650, HEIGHT - 210, 650, 20)
+        pygame.Rect(50, HEIGHT - 100, 200, 20),
+        pygame.Rect(350, HEIGHT - 200, 200, 20),
+        pygame.Rect(650, HEIGHT - 300, 650, 20)
     ]
 
     # Основной игровой цикл
     clock = pygame.time.Clock()
+    Animation(grass_image, 1, 8, 0, HEIGHT - 60)
+    Animation(lp_go, 4, 1, 80, HEIGHT - 200)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -230,21 +246,20 @@ def game_loop():
                 break
 
         # Проверка на землю
-        if not on_ground and player_pos[1] >= HEIGHT - 50:
-            player_pos[1] = HEIGHT - 50
+        if not on_ground and player_pos[1] >= HEIGHT - 78:
+            player_pos[1] = HEIGHT - 78
             on_ground = True
             player_speed_y = 0
 
         # Отрисовка
         screen.fill(WHITE)
-        all_sprites.draw(screen)
-        all_sprites.update()
-        Grass(load_image('Grass.png'), 1, 3, 1000, 29)
         for platform in platforms:
             pygame.draw.rect(screen, GREEN, platform)
         pygame.draw.rect(screen, RED, (*player_pos, 50, 50))
         clock.tick(FPS)
-        pygame.display.update()  # ------------------------------- Используй update() !
+        all_sprites.update()
+        all_sprites.draw(screen)
+        pygame.display.update()
 
 
 # Функция для продолжения игры
@@ -313,7 +328,7 @@ def settings_menu():
                 return
 
         # Обновление экрана
-        pygame.display.flip()
+        pygame.display.update()
 
 
 # Запуск
