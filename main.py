@@ -243,9 +243,9 @@ def main_menu():
 
 
 # Создание платформ
-platforms = [pygame.Rect(50, HEIGHT - 70, 200, 20),
-             pygame.Rect(350, HEIGHT - 140, 200, 20),
-             pygame.Rect(650, HEIGHT - 210, 650, 20),
+platforms = [pygame.Rect(50, HEIGHT - 100, 200, 20),
+             pygame.Rect(350, HEIGHT - 200, 200, 20),
+             pygame.Rect(650, HEIGHT - 300, 650, 20),
              pygame.Rect(50, HEIGHT - 310, 200, 20),
              pygame.Rect(300, HEIGHT - 270, 200, 20),
              pygame.Rect(250, HEIGHT - 450, 200, 20),
