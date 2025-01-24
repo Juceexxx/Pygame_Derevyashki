@@ -1,6 +1,7 @@
 import pygame
 import sys
 import os
+import sqlite3
 
 # Инициализация Pygame
 pygame.init()
@@ -109,15 +110,77 @@ difficulty_level = 'Легкий'  # Начальный уровень слож�
 full_screen = False
 
 
+# Инициализация базы данных
+def init_db():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)''')
+    conn.commit()
+    conn.close()
+
+
+# Функция для добавления пользователя в базу данных
+def add_user(username, password):
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+    conn.commit()
+    conn.close()
+
+
 # Функция для отображения текста на экране
 def draw_text(text, fonts, color, surface, x, y):
     textobj = fonts.render(text, True, color)
     surface.blit(textobj, (x, y))
 
 
+# Центрирует прямоугольник в текущем размере экрана.
 def center_rect(rect):
-    """Центрирует прямоугольник в текущем размере экрана."""
-    return rect.move((current_resolution[0] - rect.width) // 2, (current_resolution[1] - rect.height) // 2)
+    rect.move((current_resolution[0] - rect.width) // 2, (current_resolution[1] - rect.height) // 2)
+
+
+# Функция для регистрации пользователя
+# Функция для входа пользователя
+def login_menu():
+    username = ""
+    password = ""
+    input_active = "username"  # Переменная для отслеживания активного поля
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    add_user(username, password)
+                    game_loop()  # Запуск игры
+                elif event.key == pygame.K_BACKSPACE:
+                    if input_active == "username" and len(username) > 0:
+                        username = username[:-1]
+                    elif input_active == "password" and len(password) > 0:
+                        password = password[:-1]
+                elif event.key == pygame.K_TAB:  # Переключение между полями
+                    input_active = "password" if input_active == "username" else "username"
+                else:
+                    if input_active == "username":
+                        username += event.unicode
+                    elif input_active == "password":
+                        password += event.unicode
+
+        # Отображение фона
+        screen.fill(WHITE)
+
+        # Отображение текста
+        draw_text("Вход", font, DARK_GRAY, screen, WIDTH // 2 - 50, HEIGHT // 2 - 100)
+        draw_text("Имя пользователя: " + username, small_font, DARK_GRAY, screen, WIDTH // 2 - 150, HEIGHT // 2 - 40)
+        draw_text("Пароль: " + "*" * len(password), small_font, DARK_GRAY, screen, WIDTH // 2 - 150, HEIGHT // 2)
+
+        # Подсветка активного поля
+        if input_active == "username":
+            draw_text("←", small_font, DARK_GRAY, screen, WIDTH // 2 - 160, HEIGHT // 2 - 40)
+        else:
+            draw_text("←", small_font, DARK_GRAY, screen, WIDTH // 2 - 160, HEIGHT // 2)
+
+        pygame.display.flip()
 
 
 # Главная функция меню
@@ -179,9 +242,30 @@ def main_menu():
         pygame.display.update()
 
 
+# Создание платформ
+platforms = [pygame.Rect(50, HEIGHT - 70, 200, 20),
+             pygame.Rect(350, HEIGHT - 140, 200, 20),
+             pygame.Rect(650, HEIGHT - 210, 650, 20),
+             pygame.Rect(50, HEIGHT - 310, 200, 20),
+             pygame.Rect(300, HEIGHT - 270, 200, 20),
+             pygame.Rect(250, HEIGHT - 450, 200, 20),
+             pygame.Rect(250, HEIGHT - 600, 200, 20),
+             pygame.Rect(900, HEIGHT - 300, 600, 20),
+             pygame.Rect(600, HEIGHT - 400, 200, 20),
+             ]
+
+# Переменная для смещения экрана
+
+camera_offset_x = 0
+camera_offset_y = 0
+
+# Создание двери
+door_rect = pygame.Rect(WIDTH - 200, HEIGHT - 500, 50, 100)  # Позиция и размер двери
+
+
 # Основной игровой цикл
 def game_loop():
-    global full_screen, screen
+    global full_screen, screen, camera_offset_x, camera_offset_y
     # Инициализация Pygame
     pygame.init()
 
@@ -199,13 +283,6 @@ def game_loop():
     player_pos = [WIDTH // 2, HEIGHT - 200]
     player_speed_y = 0
     on_ground = False
-
-    # Платформы
-    platforms = [
-        pygame.Rect(50, HEIGHT - 100, 200, 20),
-        pygame.Rect(350, HEIGHT - 200, 200, 20),
-        pygame.Rect(650, HEIGHT - 300, 650, 20)
-    ]
 
     # Основной игровой цикл
     clock = pygame.time.Clock()
@@ -229,8 +306,12 @@ def game_loop():
         # Проверка на границы экрана
         if player_pos[0] < 0:
             player_pos[0] = 0
-        if player_pos[0] > WIDTH - 50:
-            player_pos[0] = WIDTH - 50
+        if player_pos[0] > WIDTH + 600:
+            player_pos[0] = WIDTH + 600
+        if player_pos[1] < 0:
+            player_pos[1] = 0
+        if player_pos[1] > HEIGHT - 50:
+            player_pos[0] = HEIGHT - 50
 
         # Гравитация
         player_speed_y += 1
@@ -251,20 +332,139 @@ def game_loop():
             on_ground = True
             player_speed_y = 0
 
+        # Обновление смещения камеры в зависимости от позиции игрока
+        camera_offset_x = max(0, player_pos[0] - WIDTH // 2 + 25)  # +25 для центрирования игрока
+        camera_offset_y = max(0, player_pos[1] - HEIGHT // 2)
+
         # Отрисовка
-        screen.fill(WHITE)
+        screen_resolution()
+
+        # Отрисовка платформ с учетом смещения экрана
         for platform in platforms:
-            pygame.draw.rect(screen, GREEN, platform)
-        pygame.draw.rect(screen, RED, (*player_pos, 50, 50))
-        clock.tick(FPS)
+            adjusted_platform = platform.move(-camera_offset_x, -camera_offset_y)
+            pygame.draw.rect(screen, GREEN, adjusted_platform)
+
+        # Проверка на столкновение с дверью
+        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door_rect):
+            print("Вы прошли через дверь! Игра окончена.")
+            main_menu()
+        # Отрисовка игрока с учетом смещения экрана
+        pygame.draw.rect(screen, RED, (player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50))
+
+        # Отрисовка двери
+        adjusted_door = door_rect.move(-camera_offset_x, -camera_offset_y)
+        pygame.draw.rect(screen, "BLUE", adjusted_door)
+        # Орисовка спрайтов
         all_sprites.update()
         all_sprites.draw(screen)
+
+        clock.tick(FPS)
         pygame.display.update()
 
+    # Функция для продолжения игры
 
-# Функция для продолжения игры
+
 def continue_game():
-    print("Продолжение игры...")  # Здесь будет логика продолжения игры
+    global full_screen, screen, camera_offset_x, camera_offset_y
+    # Инициализация Pygame
+    pygame.init()
+
+    # Создание окна
+    if current_resolution == (1920, 1080):
+        screen = pygame.display.set_mode(current_resolution, pygame.FULLSCREEN)
+        full_screen = True
+    else:
+        screen = pygame.display.set_mode(current_resolution)
+        full_screen = False
+
+    pygame.display.set_caption("Кубик красный")
+
+    # Переменные игрока
+    player_pos = [WIDTH // 2, HEIGHT - 200]
+    player_speed_y = 0
+    on_ground = False
+
+    # Основной игровой цикл
+    clock = pygame.time.Clock()
+    Animation(grass_image, 1, 8, 0, HEIGHT - 60)
+    Animation(lp_go, 4, 1, 80, HEIGHT - 200)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and on_ground:
+                    player_speed_y = -15
+
+        # Управление движением
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            player_pos[0] -= 5
+        if keys[pygame.K_RIGHT]:
+            player_pos[0] += 5
+
+        # Проверка на границы экрана
+        if player_pos[0] < 0:
+            player_pos[0] = 0
+        if player_pos[0] > WIDTH + 600:
+            player_pos[0] = WIDTH + 600
+        if player_pos[1] < 0:
+            player_pos[1] = 0
+        if player_pos[1] > HEIGHT - 50:
+            player_pos[0] = HEIGHT - 50
+
+        # Гравитация
+        player_speed_y += 1
+        player_pos[1] += player_speed_y
+
+        # Проверка на столкновение с платформами
+        on_ground = False
+        for platform in platforms:
+            if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(platform) and player_speed_y >= 0:
+                player_pos[1] = platform.top - 50
+                on_ground = True
+                player_speed_y = 0
+                break
+
+        # Проверка на землю
+        if not on_ground and player_pos[1] >= HEIGHT - 78:
+            player_pos[1] = HEIGHT - 78
+            on_ground = True
+            player_speed_y = 0
+
+        # # Ограничение по вертикали НЕ ПОЛУЧИЛОСЬ ЧОТ
+        # if player_pos[1] < 0:
+        #     player_pos[1] = 0
+        #     player_speed_y = 0
+        # Обновление смещения камеры в зависимости от позиции игрока
+
+        camera_offset_x = max(0, player_pos[0] - WIDTH // 2 + 25)  # +25 для центрирования игрока
+        camera_offset_y = max(0, player_pos[1] - HEIGHT // 2)
+
+        # Отрисовка
+        screen_resolution()
+
+        # Отрисовка платформ с учетом смещения экрана
+        for platform in platforms:
+            adjusted_platform = platform.move(-camera_offset_x, -camera_offset_y)
+            pygame.draw.rect(screen, GREEN, adjusted_platform)
+
+        # Проверка на столкновение с дверью
+        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door_rect):
+            print("Вы прошли через дверь! Игра окончена.")
+            main_menu()
+        # Отрисовка игрока с учетом смещения экрана
+        pygame.draw.rect(screen, RED, (player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50))
+
+        # Отрисовка двери
+        adjusted_door = door_rect.move(-camera_offset_x, -camera_offset_y)
+        pygame.draw.rect(screen, "BLUE", adjusted_door)
+        # Орисовка спрайтов
+        all_sprites.update()
+        all_sprites.draw(screen)
+
+        clock.tick(FPS)
+        pygame.display.update()
 
 
 # Функция для настроек
@@ -331,6 +531,7 @@ def settings_menu():
         pygame.display.update()
 
 
+init_db()
 # Запуск
 if __name__ == "__main__":
     main_menu()
