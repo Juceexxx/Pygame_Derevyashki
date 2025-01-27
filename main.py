@@ -51,6 +51,8 @@ exit_button_image = load_image('Exit_Button.png')
 exit_button_image = pygame.transform.scale(exit_button_image, (300, 70))
 next_button_image = load_image('Next_Button.png')
 next_button_image = pygame.transform.scale(next_button_image, (300, 70))
+exit_door = load_image('Exit_Door.png')
+exit_door = pygame.transform.scale(exit_door, (100, 130))
 grass_image = load_image('Grass.png')
 lp_go = load_image('LP_Go.png')
 background_image = load_image('background.png')
@@ -58,8 +60,9 @@ background_image = pygame.transform.scale(background_image, current_resolution)
 
 
 class Animation(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
+    def __init__(self, sheet, animation, columns, rows, x, y):
         super().__init__(all_sprites)
+        self.animation = animation
         self.sheet = sheet
         self.count = 0
         self.count2 = 0
@@ -78,18 +81,22 @@ class Animation(pygame.sprite.Sprite):
                 self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
 
     def update(self):
-        if self.sheet == grass_image:
-            self.count += 1
-            if self.count == 15:
-                self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-                self.image = self.frames[self.cur_frame]
-                self.count = 0
+        if self.animation:
+            if self.sheet == grass_image:
+                self.count += 1
+                if self.count == 15:
+                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+                    self.image = self.frames[self.cur_frame]
+                    self.count = 0
+            else:
+                self.count2 += 1
+                if self.count2 == 15:
+                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+                    self.image = self.frames[self.cur_frame]
+                    self.count2 = 0
         else:
-            self.count2 += 1
-            if self.count2 == 15:
-                self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-                self.image = self.frames[self.cur_frame]
-                self.count2 = 0
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
 
 
 # Изменение разрешения
@@ -180,7 +187,7 @@ def login_menu():
         else:
             draw_text("←", small_font, DARK_GRAY, screen, WIDTH // 2 - 160, HEIGHT // 2)
 
-        pygame.display.flip()
+        pygame.display.update()
 
 
 # Главная функция меню
@@ -286,8 +293,9 @@ def game_loop():
 
     # Основной игровой цикл
     clock = pygame.time.Clock()
-    Animation(grass_image, 1, 8, 0, HEIGHT - 60)
-    Animation(lp_go, 4, 1, 80, HEIGHT - 200)
+    Animation(grass_image, True, 1, 8, 0, HEIGHT - 60)
+    Animation(lp_go, True, 4, 1, 80, HEIGHT - 200)
+    Animation(exit_door, False, 1, 1, WIDTH - 200, HEIGHT - 500)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -345,7 +353,8 @@ def game_loop():
             pygame.draw.rect(screen, GREEN, adjusted_platform)
 
         # Проверка на столкновение с дверью
-        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door_rect):
+        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(
+                Animation(exit_door, False, 1, 1, WIDTH - 200 - camera_offset_x, HEIGHT - 500 - camera_offset_y)):
             print("Вы прошли через дверь! Игра окончена.")
             main_menu()
         # Отрисовка игрока с учетом смещения экрана
@@ -355,9 +364,8 @@ def game_loop():
         adjusted_door = door_rect.move(-camera_offset_x, -camera_offset_y)
         pygame.draw.rect(screen, "BLUE", adjusted_door)
         # Орисовка спрайтов
-        all_sprites.update()
         all_sprites.draw(screen)
-
+        all_sprites.update()
         clock.tick(FPS)
         pygame.display.update()
 
@@ -386,8 +394,9 @@ def continue_game():
 
     # Основной игровой цикл
     clock = pygame.time.Clock()
-    Animation(grass_image, 1, 8, 0, HEIGHT - 60)
-    Animation(lp_go, 4, 1, 80, HEIGHT - 200)
+    Animation(grass_image, True, 1, 8, 0, HEIGHT - 60)
+    Animation(lp_go, True, 4, 1, 80, HEIGHT - 200)
+    Animation(exit_door, False, 1, 1, 50, 50)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
