@@ -51,8 +51,8 @@ exit_button_image = load_image('Exit_Button.png')
 exit_button_image = pygame.transform.scale(exit_button_image, (300, 70))
 next_button_image = load_image('Next_Button.png')
 next_button_image = pygame.transform.scale(next_button_image, (300, 70))
-exit_door = load_image('Exit_Door.png')
-exit_door = pygame.transform.scale(exit_door, (100, 130))
+exit_door_image = load_image('Exit_Door.png')
+exit_door_image = pygame.transform.scale(exit_door_image, (100, 130))
 grass_image = load_image('Grass.png')
 lp_go = load_image('LP_Go.png')
 background_image = load_image('background.png')
@@ -74,7 +74,6 @@ class Animation(pygame.sprite.Sprite):
 
     def cut_sheet(self, sheet, columns, rows):
         self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
-
         for j in range(rows):
             for i in range(columns):
                 frame_location = (self.rect.w * i, self.rect.h * j)
@@ -105,7 +104,6 @@ def screen_resolution():
 
 
 # Настройка экрана в полноэкранном режиме
-# screen = pygame.display.set_mode(current_resolution)
 pygame.display.set_caption('Древесные Рыцари')
 
 # Шрифты
@@ -295,7 +293,7 @@ def game_loop():
     clock = pygame.time.Clock()
     Animation(grass_image, True, 1, 8, 0, HEIGHT - 60)
     Animation(lp_go, True, 4, 1, 80, HEIGHT - 200)
-    Animation(exit_door, False, 1, 1, WIDTH - 200, HEIGHT - 500)
+    Animation(exit_door_image, False, 1, 1, WIDTH - 200, HEIGHT - 500)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -341,7 +339,7 @@ def game_loop():
             player_speed_y = 0
 
         # Обновление смещения камеры в зависимости от позиции игрока
-        camera_offset_x = max(0, player_pos[0] - WIDTH // 2 + 25)  # +25 для центрирования игрока
+        camera_offset_x = max(0, player_pos[0] - WIDTH // 2)  # +25 для центрирования игрока
         camera_offset_y = max(0, player_pos[1] - HEIGHT // 2)
 
         # Отрисовка
@@ -352,20 +350,19 @@ def game_loop():
             adjusted_platform = platform.move(-camera_offset_x, -camera_offset_y)
             pygame.draw.rect(screen, GREEN, adjusted_platform)
 
+        # Отрисовка двери
+        door_exit = screen.blit(exit_door_image, (WIDTH - 200 - camera_offset_x, HEIGHT - 530 - camera_offset_y))
+
         # Проверка на столкновение с дверью
-        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(
-                Animation(exit_door, False, 1, 1, WIDTH - 200 - camera_offset_x, HEIGHT - 500 - camera_offset_y)):
+        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door_exit):
             print("Вы прошли через дверь! Игра окончена.")
             main_menu()
         # Отрисовка игрока с учетом смещения экрана
         pygame.draw.rect(screen, RED, (player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50))
 
-        # Отрисовка двери
-        adjusted_door = door_rect.move(-camera_offset_x, -camera_offset_y)
-        pygame.draw.rect(screen, "BLUE", adjusted_door)
         # Орисовка спрайтов
-        all_sprites.draw(screen)
-        all_sprites.update()
+        # all_sprites.draw(screen)
+        # all_sprites.update()
         clock.tick(FPS)
         pygame.display.update()
 
@@ -396,7 +393,7 @@ def continue_game():
     clock = pygame.time.Clock()
     Animation(grass_image, True, 1, 8, 0, HEIGHT - 60)
     Animation(lp_go, True, 4, 1, 80, HEIGHT - 200)
-    Animation(exit_door, False, 1, 1, 50, 50)
+    Animation(exit_door_image, False, 1, 1, 50, 50)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -459,14 +456,14 @@ def continue_game():
             pygame.draw.rect(screen, GREEN, adjusted_platform)
 
         # Проверка на столкновение с дверью
-        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door_rect):
+        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(exit_door):
             print("Вы прошли через дверь! Игра окончена.")
             main_menu()
         # Отрисовка игрока с учетом смещения экрана
         pygame.draw.rect(screen, RED, (player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50))
 
         # Отрисовка двери
-        adjusted_door = door_rect.move(-camera_offset_x, -camera_offset_y)
+        adjusted_door = exit_door.move(-camera_offset_x, -camera_offset_y)
         pygame.draw.rect(screen, "BLUE", adjusted_door)
         # Орисовка спрайтов
         all_sprites.update()
