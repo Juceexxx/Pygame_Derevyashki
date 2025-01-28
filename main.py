@@ -2,6 +2,7 @@ import pygame
 import sys
 import os
 import sqlite3
+import pygame_gui
 
 # Инициализация Pygame
 pygame.init()
@@ -13,6 +14,8 @@ current_resolution = WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Древесные Рыцари")
 all_sprites = pygame.sprite.Group()
+manager = pygame_gui.UIManager(current_resolution)
+clock = pygame.time.Clock()
 
 # Константы
 WHITE = (255, 255, 255)
@@ -53,6 +56,8 @@ next_button_image = load_image('Next_Button.png')
 next_button_image = pygame.transform.scale(next_button_image, (300, 70))
 exit_door_image = load_image('Exit_Door.png')
 exit_door_image = pygame.transform.scale(exit_door_image, (100, 130))
+platform_image = load_image('Platform.png')
+platform_image = pygame.transform.scale(platform_image, (200, 33))
 grass_image = load_image('Grass.png')
 lp_go = load_image('LP_Go.png')
 background_image = load_image('background.png')
@@ -190,14 +195,20 @@ def login_menu():
 
 # Главная функция меню
 def main_menu():
+    time_delta = clock.tick(FPS) / 1000.0
     global current_resolution, screen
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
 
+            manager.process_events(event)
+        manager.update(time_delta)
+
         # Отображение фонового изображения
         screen_resolution()
+
+        manager.draw_ui(screen)
 
         # Фон кнопок и заголовка
         surf = pygame.Surface((330, 400))
@@ -244,20 +255,25 @@ def main_menu():
                 sys.exit()  # Выход
 
         # Обновление экрана
-        pygame.display.update()
+        pygame.display.flip()
 
 
+# Координаты платформ
+platforms_coord = [[50, HEIGHT - 100, 200, 20],
+                   [350, HEIGHT - 200, 200, 20],
+                   [650, HEIGHT - 300, 200, 20],
+                   [50, HEIGHT - 310, 200, 20],
+                   [300, HEIGHT - 270, 200, 20],
+                   [250, HEIGHT - 450, 200, 20],
+                   [250, HEIGHT - 600, 200, 20],
+                   [900, HEIGHT - 300, 200, 20],
+                   [600, HEIGHT - 400, 200, 20],
+                   ]
+
+platforms = []
 # Создание платформ
-platforms = [pygame.Rect(50, HEIGHT - 100, 200, 20),
-             pygame.Rect(350, HEIGHT - 200, 200, 20),
-             pygame.Rect(650, HEIGHT - 300, 650, 20),
-             pygame.Rect(50, HEIGHT - 310, 200, 20),
-             pygame.Rect(300, HEIGHT - 270, 200, 20),
-             pygame.Rect(250, HEIGHT - 450, 200, 20),
-             pygame.Rect(250, HEIGHT - 600, 200, 20),
-             pygame.Rect(900, HEIGHT - 300, 600, 20),
-             pygame.Rect(600, HEIGHT - 400, 200, 20),
-             ]
+for p in platforms_coord:
+    platforms.append(pygame.Rect(*p))
 
 # Переменная для смещения экрана
 
@@ -265,7 +281,7 @@ camera_offset_x = 0
 camera_offset_y = 0
 
 # Создание двери
-door_rect = pygame.Rect(WIDTH - 200, HEIGHT - 500, 50, 100)  # Позиция и размер двери
+door_rect = pygame.Rect(WIDTH - 178, HEIGHT - 500, 50, 100)  # Позиция и размер двери
 
 
 # Основной игровой цикл
@@ -349,12 +365,14 @@ def game_loop():
         for platform in platforms:
             adjusted_platform = platform.move(-camera_offset_x, -camera_offset_y)
             pygame.draw.rect(screen, GREEN, adjusted_platform)
+            for pl in platforms_coord:
+                screen.blit(platform_image, (pl[0] - camera_offset_x, pl[1] - 13 - camera_offset_y))
 
         # Отрисовка двери
-        door_exit = screen.blit(exit_door_image, (WIDTH - 200 - camera_offset_x, HEIGHT - 530 - camera_offset_y))
+        screen.blit(exit_door_image, (WIDTH - 200 - camera_offset_x, HEIGHT - 530 - camera_offset_y))
 
         # Проверка на столкновение с дверью
-        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door_exit):
+        if pygame.Rect(player_pos[0], player_pos[1], 51, 51).colliderect(door_rect):
             print("Вы прошли через дверь! Игра окончена.")
             main_menu()
         # Отрисовка игрока с учетом смещения экрана
@@ -363,9 +381,8 @@ def game_loop():
         # Орисовка спрайтов
         # all_sprites.draw(screen)
         # all_sprites.update()
+        pygame.display.flip()
         clock.tick(FPS)
-        pygame.display.update()
-
     # Функция для продолжения игры
 
 
@@ -455,16 +472,17 @@ def continue_game():
             adjusted_platform = platform.move(-camera_offset_x, -camera_offset_y)
             pygame.draw.rect(screen, GREEN, adjusted_platform)
 
+        # Отрисовка двери
+        door_exit = screen.blit(exit_door_image, (WIDTH - 200 - camera_offset_x, HEIGHT - 530 - camera_offset_y))
+
         # Проверка на столкновение с дверью
-        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(exit_door):
+        if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door_exit):
             print("Вы прошли через дверь! Игра окончена.")
             main_menu()
+
         # Отрисовка игрока с учетом смещения экрана
         pygame.draw.rect(screen, RED, (player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50))
 
-        # Отрисовка двери
-        adjusted_door = exit_door.move(-camera_offset_x, -camera_offset_y)
-        pygame.draw.rect(screen, "BLUE", adjusted_door)
         # Орисовка спрайтов
         all_sprites.update()
         all_sprites.draw(screen)
