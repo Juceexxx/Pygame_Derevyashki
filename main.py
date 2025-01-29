@@ -397,6 +397,10 @@ def main_menu():
         surf.fill(DARK_GRAY)
         surf.set_alpha(200)
         grey_rect = screen.blit(surf, (WIDTH // 2 - 162, HEIGHT // 2 - 165))
+        surf2 = pygame.Surface((300, 100))
+        surf.fill(DARK_GRAY)
+        surf.set_alpha(200)
+        grey_rect_for_text = screen.blit(surf2, (10, 10))
 
         # Отображение заголовка
         draw_text('Деревяшки', font, WHITE, screen, grey_rect.x + 15, grey_rect.y + 10)
@@ -473,7 +477,7 @@ def level_selection_menu():
                     print("Выбран уровень 2")  # Здесь можно вызвать функцию для второго уровня
                     level_two()
                 elif event.key == pygame.K_ESCAPE:  # Выход из выбора уровня
-                    login_menu()
+                    main_menu()
 
         # Отображение фона
         screen.fill(WHITE)
