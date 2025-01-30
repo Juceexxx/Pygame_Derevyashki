@@ -5,6 +5,10 @@ import sqlite3
 import pygame_gui
 import cv2
 
+from Animation import AnimatedSprite
+from Enemy import Enemy
+from Bullet import Bullet
+
 # Инициализация Pygame
 pygame.init()
 
@@ -33,11 +37,6 @@ DAMAGE = 100
 # Настройка экрана в полноэкранном режиме
 pygame.display.set_caption('Древесные Рыцари')
 
-# Шрифты
-font = pygame.font.Font('Data/Bitcell.ttf', 80)
-small_font = pygame.font.Font('Data/Bitcell.ttf', 46)
-miles_font = pygame.font.Font('Data/Bitcell.ttf', 30)
-
 # Переменные по умолчанию
 current_difficulty = 'Большой детина'
 entry = False
@@ -46,7 +45,16 @@ hp_player = 100
 damage_player = 100
 hp_enemy_pitch = 100
 damage_enemy_pitch = 100
-speed_enemy = 1
+speed_en = 1
+
+# Шрифты
+font = pygame.font.Font('Data/Bitcell.ttf', 80)
+small_font = pygame.font.Font('Data/Bitcell.ttf', 46)
+miles_font = pygame.font.Font('Data/Bitcell.ttf', 30)
+
+hello_text = open('Data/Hello_text.txt', 'r')
+hello_text.read()
+hello_text.close()
 
 
 # Загрузка изображений и изменение размера
@@ -57,7 +65,7 @@ def load_image(name):
         print(f'Файл с изображением "{fullname}" не найден')
         pygame.quit()
         sys.exit()
-    image = pygame.image.load(fullname)
+    image = pygame.image.load(fullname).convert_alpha()
     return image
 
 
@@ -91,118 +99,27 @@ arrow_r_image = load_image('Arrow_R.png')
 arrow_l_image = load_image('Arrow_L.png')
 grass_image = load_image('Grass.png')
 lp_go = load_image('LP_Go.png')
+lp_go = pygame.transform.scale(lp_go, (64 * 6, 16 * 6))
 background_image = load_image('background.png')
 background_image = pygame.transform.scale(background_image, current_resolution)
 
 
-class Animation(pygame.sprite.Sprite):
-    def __init__(self, sheet, animation, columns, rows, x, y):
-        super().__init__(all_sprites)
-        self.animation = animation
-        self.sheet = sheet
-        self.count = 0
-        self.count2 = 0
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x, y)
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns, sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
-
-    def update(self):
-        if self.animation:
-            if self.sheet == grass_image:
-                self.count += 1
-                if self.count == 15:
-                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-                    self.image = self.frames[self.cur_frame]
-                    self.count = 0
-            else:
-                self.count2 += 1
-                if self.count2 == 15:
-                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-                    self.image = self.frames[self.cur_frame]
-                    self.count2 = 0
-        else:
-            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-            self.image = self.frames[self.cur_frame]
-
-
-# Класс для враждебных NPC
-class Enemy:
-    def __init__(self, x, y, min_x, max_x, hp):
-        global speed_enemy
-        self.rect = pygame.Rect(x, y, 50, 50)
-        self.speed = speed_enemy
-        self.direction = 1  # 1 - вправо, -1 - влево
-        self.min_x = min_x
-        self.max_x = max_x
-        self.hp = hp
-        self.alive = True  # Добавляем состояние "живой"
-
-    def update(self):
-        # Движение NPC
-        self.rect.x += self.speed * self.direction
-
-        # Проверка на столкновение с границами платформы
-        if self.rect.x <= self.min_x or self.rect.x >= self.max_x:  # Предполагаем, что платформа находится в пределах этих координат
-            self.direction *= -1  # Меняем направление
-
-    def draw(self, screen, camera_offset_x, camera_offset_y, enemy_pitch_r, enemy_pitch_l):
-        if self.alive:  # Отрисовываем NPC только если он жив
-            if self.direction == 1:
-                screen.blit(pygame.transform.scale(enemy_pitch_r, (50, 50)), (
-                    self.rect.x - camera_offset_x, self.rect.y - camera_offset_y, self.rect.width, self.rect.height))
-            else:
-                screen.blit(pygame.transform.scale(enemy_pitch_l, (50, 50)), (
-                    self.rect.x - camera_offset_x, self.rect.y - camera_offset_y, self.rect.width, self.rect.height))
-            draw_text(f'{int(self.hp)}', miles_font, WHITE, screen, self.rect.x + 10 - camera_offset_x,
-                      self.rect.y - 30 - camera_offset_y)
-
-
-# Класс для пуль
-class Bullet:
-    def __init__(self, x, y, direction):
-        self.rect = pygame.Rect(x, y, 10, 5)
-        self.alive = True
-        self.direction = direction  # Направление пули (1 - вправо, -1 - влево)
-
-    def update(self):
-        if self.alive:
-            self.rect.x += BULLET_SPEED * self.direction  # Умножаем скорость на направление
-
-    def draw(self, screen, camera_offset_x, camera_offset_y, arrow_r, arrow_l):
-        if self.alive:
-            if self.direction == 1:
-                screen.blit(pygame.transform.scale(arrow_r, (10, 5)), (
-                    self.rect.x - camera_offset_x, self.rect.y - camera_offset_y, self.rect.width, self.rect.height))
-            else:
-                screen.blit(pygame.transform.scale(arrow_l, (10, 5)), (
-                    self.rect.x - camera_offset_x, self.rect.y - camera_offset_y, self.rect.width, self.rect.height))
-
-
 def difficulty():
-    global damage_player, damage_enemy_pitch, speed_enemy
+    global damage_player, damage_enemy_pitch, speed_en
     damage_player_id = 1
     damage_enemy_pitch_id = 1
     if current_difficulty == 'Большой детина':
         damage_player_id = 1
         damage_enemy_pitch_id = 0.334
-        speed_enemy = 1
+        speed_en = 1
     elif current_difficulty == 'Идеальный баланс':
         damage_player_id = 1.5
         damage_enemy_pitch_id = 0.667
-        speed_enemy = 1
+        speed_en = 1
     elif current_difficulty == 'Суровая реальность':
         damage_player_id = 2
         damage_enemy_pitch_id = 1
-        speed_enemy = 2
+        speed_en = 2
 
     damage_enemy_pitch = DAMAGE * damage_enemy_pitch_id
     damage_player = DAMAGE // damage_player_id
@@ -211,6 +128,13 @@ def difficulty():
 # Изменение разрешения
 def screen_back_ground():
     screen.blit(pygame.transform.scale(background_image, current_resolution), (0, 0))
+
+
+def checking_fullscreen():
+    if current_resolution == (1920, 1080):
+        screen = pygame.display.set_mode(current_resolution, pygame.FULLSCREEN)
+    else:
+        screen = pygame.display.set_mode(current_resolution)
 
 
 def Congrutulations(video_path):
@@ -545,7 +469,10 @@ def level_one():
                  [400, HEIGHT - 500, 200, 20],
                  [1125, HEIGHT - 400, 200, 20],
                  [1250, HEIGHT - 175, 200, 20],
-                 [1400, HEIGHT - 400, 200, 20],
+                 [1600, HEIGHT - 175, 200, 20],
+                 [1800, HEIGHT - 300, 200, 20],
+                 [1700, HEIGHT - 425, 200, 20],
+                 [1400, HEIGHT - 450, 200, 20],
                  ]
 
     platforms.clear()
@@ -553,14 +480,14 @@ def level_one():
     for p in plat_co_1:
         platforms.append(pygame.Rect(*p))
     # Создание двери
-    door_rect_1 = pygame.Rect(plat_co_1[-1][0] + 50, HEIGHT - 500, 50, 100)
+    door_rect_1 = pygame.Rect(plat_co_1[-1][0] + 50, plat_co_1[-1][1] - 100, 50, 100)
 
     # создание NPC
     enemies_1 = [
-        Enemy(plat_co_1[0][0], plat_co_1[0][1] - 50, plat_co_1[0][0], plat_co_1[0][0] + 150, hp_enemy_pitch),
-        Enemy(plat_co_1[1][0], plat_co_1[1][1] - 50, plat_co_1[1][0], plat_co_1[1][0] + 150, hp_enemy_pitch),
-        Enemy(plat_co_1[2][0], plat_co_1[2][1] - 50, plat_co_1[2][0], plat_co_1[2][0] + 150, hp_enemy_pitch),
-        Enemy(plat_co_1[3][0], plat_co_1[3][1] - 50, plat_co_1[3][0], plat_co_1[3][0] + 150, hp_enemy_pitch)]
+        Enemy(plat_co_1[0][0], plat_co_1[0][1] - 50, plat_co_1[0][0], plat_co_1[0][0] + 150, hp_enemy_pitch, speed_en),
+        Enemy(plat_co_1[1][0], plat_co_1[1][1] - 50, plat_co_1[1][0], plat_co_1[1][0] + 150, hp_enemy_pitch, speed_en),
+        Enemy(plat_co_1[2][0], plat_co_1[2][1] - 50, plat_co_1[2][0], plat_co_1[2][0] + 150, hp_enemy_pitch, speed_en),
+        Enemy(plat_co_1[3][0], plat_co_1[3][1] - 50, plat_co_1[3][0], plat_co_1[3][0] + 150, hp_enemy_pitch, speed_en)]
 
     game_loop(plat_co_1, door_rect_1, enemies_1, platforms)
 
@@ -584,8 +511,9 @@ def level_two():
     door_rect_2 = pygame.Rect(WIDTH - 178, HEIGHT - 500, 50, 100)
 
     # создание NPC
-    enemies_2 = [Enemy(plat_co_2[0][0], plat_co_2[0][1] - 50, plat_co_2[0][0], plat_co_2[0][0] + 150, hp_enemy_pitch),
-                 Enemy(plat_co_2[1][0], plat_co_2[1][1] - 50, plat_co_2[1][0], plat_co_2[1][0] + 150, hp_enemy_pitch)]
+    enemies_2 = [
+        Enemy(plat_co_2[0][0], plat_co_2[0][1] - 50, plat_co_2[0][0], plat_co_2[0][0] + 150, hp_enemy_pitch, speed_en),
+        Enemy(plat_co_2[1][0], plat_co_2[1][1] - 50, plat_co_2[1][0], plat_co_2[1][0] + 150, hp_enemy_pitch, speed_en)]
 
     game_loop(plat_co_2, door_rect_2, enemies_2, platforms)
 
@@ -597,10 +525,6 @@ def game_loop(coord_platform, door, enemie, plats):
     pygame.init()
 
     # Создание окна
-    if current_resolution == (1920, 1080):
-        screen = pygame.display.set_mode(current_resolution, pygame.FULLSCREEN)
-    else:
-        screen = pygame.display.set_mode(current_resolution)
 
     pygame.display.set_caption("Кубик красный")
 
@@ -614,9 +538,8 @@ def game_loop(coord_platform, door, enemie, plats):
 
     # Основной игровой цикл
     difficulty()
-
-    Animation(grass_image, True, 1, 8, 0, HEIGHT - 60)
-    Animation(lp_go, True, 4, 1, 80, HEIGHT - 200)
+    count_frame = 0.1
+    player_r = AnimatedSprite(all_sprites, count_frame, lp_go, 4, 1, 10 - camera_offset_x, 10 - camera_offset_y)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -626,26 +549,27 @@ def game_loop(coord_platform, door, enemie, plats):
                 if event.key == pygame.K_SPACE and on_ground:
                     player_speed_y = -16
                 if event.key == pygame.K_RETURN:  # Стрельба по нажатию Enter
-                    bullet = Bullet(player_pos[0] + (50 if direction == 1 else -10), player_pos[1] + 20, direction)
+                    bullet = Bullet(player_pos[0] + (50 if direction == 1 else -10), player_pos[1] + 20, direction,
+                                    BULLET_SPEED)
                     bullets.append(bullet)
+
         # Управление движением
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             player_pos[0] -= 5
             direction = -1  # Изменяем направление на влево
-        if keys[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT]:
             player_pos[0] += 5
             direction = 1  # Изменяем направление на вправо
 
+        else:
+            pass
+
         # Проверка на границы экрана
-        if player_pos[0] < 0:
-            player_pos[0] = 0
-        if player_pos[0] > WIDTH + 1000:
-            player_pos[0] = WIDTH + 1000
-        if player_pos[1] < -100:
-            player_pos[1] = -100
-        if player_pos[1] > HEIGHT:
-            player_pos[1] = HEIGHT
+        if player_pos[0] < 0:            player_pos[0] = 0
+        if player_pos[0] > WIDTH + 2000: player_pos[0] = WIDTH + 2000
+        if player_pos[1] < -100:         player_pos[1] = -100
+        if player_pos[1] > HEIGHT:       player_pos[1] = HEIGHT
 
         # Гравитация
         player_speed_y += 1
@@ -687,7 +611,8 @@ def game_loop(coord_platform, door, enemie, plats):
         # Обновление и отрисовка NPC
         for enemy in enemie[:]:  # Используем срез для безопасного удаления элементов из списка во время итерации
             enemy.update()
-            enemy.draw(screen, camera_offset_x, camera_offset_y, enemy_pitch_r_image, enemy_pitch_l_image)
+            enemy.draw(screen, camera_offset_x, camera_offset_y, enemy_pitch_r_image, enemy_pitch_l_image, miles_font,
+                       WHITE)
 
             # Проверка на столкновение с игроком
             if enemy.alive and pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(enemy.rect):
@@ -728,19 +653,17 @@ def game_loop(coord_platform, door, enemie, plats):
             Congrutulations("sigmaboy1.mp4")
         # Отрисовка игрока с учетом смещения экрана
         # pygame.draw.rect(screen, RED, (player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50))
-        player_width = 50  # Ширина игрока
-        player_rect = pygame.Rect(player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, player_width, 50)
+        player_rect = pygame.Rect(player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50)
         draw_text(f'{int(hp_player)}', miles_font, WHITE, screen, player_pos[0] + 10 - camera_offset_x,
                   player_pos[1] - 30 - camera_offset_y)
 
         # Если направление -1 (влево), сдвигаем прямоугольник влево
-        if direction == -1:
-            player_rect.x -= 1
+        if direction == -1: player_rect.x -= 1
         pygame.draw.rect(screen, "RED", player_rect)
 
+        player_r.update()
         # Орисовка спрайтов
-        # all_sprites.draw(screen)
-        # all_sprites.update()
+        all_sprites.draw(screen)
         clock.tick(FPS)
         pygame.display.flip()
 
@@ -751,12 +674,6 @@ def continue_game():
     # Инициализация Pygame
     pygame.init()
 
-    # Создание окна
-    if current_resolution == (1920, 1080):
-        screen = pygame.display.set_mode(current_resolution, pygame.FULLSCREEN)
-    else:
-        screen = pygame.display.set_mode(current_resolution)
-
     pygame.display.set_caption("Кубик красный")
 
     # Переменные игрока
@@ -765,9 +682,6 @@ def continue_game():
     on_ground = False
 
     # Основной игровой цикл
-    Animation(grass_image, True, 1, 8, 0, HEIGHT - 60)
-    Animation(lp_go, True, 4, 1, 80, HEIGHT - 200)
-    Animation(exit_door_image, False, 1, 1, 50, 50)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -901,7 +815,6 @@ def settings_menu():
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
                 sys.exit()
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
@@ -914,10 +827,7 @@ def settings_menu():
                         m = z.split('x')
                         current_resolution = WIDTH, HEIGHT = int(m[0]), int(m[1])
                         # Установка режима отображения
-                        if current_resolution == (1920, 1080):
-                            screen = pygame.display.set_mode(current_resolution, pygame.FULLSCREEN)
-                        else:
-                            screen = pygame.display.set_mode(current_resolution)
+                        checking_fullscreen()
 
                         print('res:', event.text)
 
