@@ -34,8 +34,9 @@ DAMAGE = 100
 pygame.display.set_caption('Древесные Рыцари')
 
 # Шрифты
-font = pygame.font.Font('Bitcell.ttf', 80)
-small_font = pygame.font.Font('Bitcell.ttf', 46)
+font = pygame.font.Font('Data/Bitcell.ttf', 80)
+small_font = pygame.font.Font('Data/Bitcell.ttf', 46)
+miles_font = pygame.font.Font('Data/Bitcell.ttf', 30)
 
 # Переменные по умолчанию
 current_difficulty = 'Большой детина'
@@ -45,6 +46,7 @@ hp_player = 100
 damage_player = 100
 hp_enemy_pitch = 100
 damage_enemy_pitch = 100
+speed_enemy = 1
 
 
 # Загрузка изображений и изменение размера
@@ -135,8 +137,9 @@ class Animation(pygame.sprite.Sprite):
 # Класс для враждебных NPC
 class Enemy:
     def __init__(self, x, y, min_x, max_x, hp):
+        global speed_enemy
         self.rect = pygame.Rect(x, y, 50, 50)
-        self.speed = 1
+        self.speed = speed_enemy
         self.direction = 1  # 1 - вправо, -1 - влево
         self.min_x = min_x
         self.max_x = max_x
@@ -159,6 +162,8 @@ class Enemy:
             else:
                 screen.blit(pygame.transform.scale(enemy_pitch_l, (50, 50)), (
                     self.rect.x - camera_offset_x, self.rect.y - camera_offset_y, self.rect.width, self.rect.height))
+            draw_text(f'{int(self.hp)}', miles_font, WHITE, screen, self.rect.x + 10 - camera_offset_x,
+                      self.rect.y - 30 - camera_offset_y)
 
 
 # Класс для пуль
@@ -183,18 +188,22 @@ class Bullet:
 
 
 def difficulty():
-    global damage_player, damage_enemy_pitch
+    global damage_player, damage_enemy_pitch, speed_enemy
     damage_player_id = 1
     damage_enemy_pitch_id = 1
     if current_difficulty == 'Большой детина':
         damage_player_id = 1
         damage_enemy_pitch_id = 0.334
+        speed_enemy = 1
     elif current_difficulty == 'Идеальный баланс':
         damage_player_id = 1.5
         damage_enemy_pitch_id = 0.667
+        speed_enemy = 1
     elif current_difficulty == 'Суровая реальность':
         damage_player_id = 2
         damage_enemy_pitch_id = 1
+        speed_enemy = 2
+
     damage_enemy_pitch = DAMAGE * damage_enemy_pitch_id
     damage_player = DAMAGE // damage_player_id
 
@@ -305,8 +314,8 @@ def draw_text(text, fonts, color, surface, x, y):
 
 
 # Центрирует прямоугольник в текущем размере экрана.
-def center_rect(rect):
-    rect.move((current_resolution[0] - rect.width) // 2, (current_resolution[1] - rect.height) // 2)
+# def center_rect(rect):
+#     rect.move((current_resolution[0] - rect.width) // 2, (current_resolution[1] - rect.height) // 2)
 
 
 # Функция для регистрации пользователя
@@ -495,10 +504,6 @@ camera_offset_x = 0
 camera_offset_y = 0
 
 
-# Создание NPC с уникальными координатами смены направления
-# enemies = [Enemy(100, HEIGHT - 150, 50, 200), Enemy(400, HEIGHT - 250, 300, 500)]
-
-
 # Функция выбора уровня
 def level_selection_menu():
     while True:
@@ -532,13 +537,15 @@ def level_one():
     # Координаты платформ
     plat_co_1 = [[50, HEIGHT - 100, 200, 20],
                  [350, HEIGHT - 200, 200, 20],
-                 [650, HEIGHT - 300, 200, 20],
+                 [825, HEIGHT - 300, 200, 20],
+                 [250, HEIGHT - 425, 200, 20],
                  [50, HEIGHT - 310, 200, 20],
-                 [350, HEIGHT - 300, 200, 20],
-                 [250, HEIGHT - 450, 200, 20],
-                 [250, HEIGHT - 600, 200, 20],
-                 [900, HEIGHT - 300, 200, 20],
-                 [600, HEIGHT - 400, 200, 20],
+                 [450, HEIGHT - 300, 200, 20],
+                 [650, HEIGHT - 100, 200, 20],
+                 [400, HEIGHT - 500, 200, 20],
+                 [1125, HEIGHT - 400, 200, 20],
+                 [1250, HEIGHT - 175, 200, 20],
+                 [1400, HEIGHT - 400, 200, 20],
                  ]
 
     platforms.clear()
@@ -546,13 +553,14 @@ def level_one():
     for p in plat_co_1:
         platforms.append(pygame.Rect(*p))
     # Создание двери
-    door_rect_1 = pygame.Rect(WIDTH - 178, HEIGHT - 500, 50, 100)
+    door_rect_1 = pygame.Rect(plat_co_1[-1][0] + 50, HEIGHT - 500, 50, 100)
 
     # создание NPC
     enemies_1 = [
         Enemy(plat_co_1[0][0], plat_co_1[0][1] - 50, plat_co_1[0][0], plat_co_1[0][0] + 150, hp_enemy_pitch),
         Enemy(plat_co_1[1][0], plat_co_1[1][1] - 50, plat_co_1[1][0], plat_co_1[1][0] + 150, hp_enemy_pitch),
-        Enemy(plat_co_1[4][0], plat_co_1[4][1] - 50, plat_co_1[4][0], plat_co_1[4][0] + 150, hp_enemy_pitch)]
+        Enemy(plat_co_1[2][0], plat_co_1[2][1] - 50, plat_co_1[2][0], plat_co_1[2][0] + 150, hp_enemy_pitch),
+        Enemy(plat_co_1[3][0], plat_co_1[3][1] - 50, plat_co_1[3][0], plat_co_1[3][0] + 150, hp_enemy_pitch)]
 
     game_loop(plat_co_1, door_rect_1, enemies_1, platforms)
 
@@ -597,7 +605,7 @@ def game_loop(coord_platform, door, enemie, plats):
     pygame.display.set_caption("Кубик красный")
 
     # Переменные игрока
-    player_pos = [WIDTH // 2, HEIGHT - 50]
+    player_pos = [10, HEIGHT - 50]
     player_speed_y = 0
     on_ground = False
     direction = 1  # Направление игрока (1 - вправо, -1 - влево)
@@ -609,8 +617,6 @@ def game_loop(coord_platform, door, enemie, plats):
 
     Animation(grass_image, True, 1, 8, 0, HEIGHT - 60)
     Animation(lp_go, True, 4, 1, 80, HEIGHT - 200)
-    Animation(exit_door_image, False, 1, 1, WIDTH - 200, HEIGHT - 500)
-
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -618,7 +624,7 @@ def game_loop(coord_platform, door, enemie, plats):
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and on_ground:
-                    player_speed_y = -15
+                    player_speed_y = -16
                 if event.key == pygame.K_RETURN:  # Стрельба по нажатию Enter
                     bullet = Bullet(player_pos[0] + (50 if direction == 1 else -10), player_pos[1] + 20, direction)
                     bullets.append(bullet)
@@ -634,12 +640,12 @@ def game_loop(coord_platform, door, enemie, plats):
         # Проверка на границы экрана
         if player_pos[0] < 0:
             player_pos[0] = 0
-        if player_pos[0] > WIDTH + 600:
-            player_pos[0] = WIDTH + 600
-        if player_pos[1] < 0:
-            player_pos[1] = 0
-        if player_pos[1] > HEIGHT - 50:
-            player_pos[0] = HEIGHT - 50
+        if player_pos[0] > WIDTH + 1000:
+            player_pos[0] = WIDTH + 1000
+        if player_pos[1] < -100:
+            player_pos[1] = -100
+        if player_pos[1] > HEIGHT:
+            player_pos[1] = HEIGHT
 
         # Гравитация
         player_speed_y += 1
@@ -648,11 +654,16 @@ def game_loop(coord_platform, door, enemie, plats):
         # Проверка на столкновение с платформами
         on_ground = False
         for platform in plats:
-            if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(platform) and player_speed_y >= 0:
-                player_pos[1] = platform.top - 50
-                on_ground = True
-                player_speed_y = 0
-                break
+            if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(platform):
+                if platform.top <= player_pos[1] <= platform.top + 20:
+                    player_pos[1] = platform.top + 20
+                    player_speed_y = 0
+                    break
+                else:
+                    player_pos[1] = platform.top - 50  # Если убрать, получится цикл для перемещения в слизи
+                    on_ground = True
+                    player_speed_y = 0
+                    break
 
         # Проверка на землю
         if not on_ground and player_pos[1] >= HEIGHT - 50:
@@ -661,7 +672,7 @@ def game_loop(coord_platform, door, enemie, plats):
             player_speed_y = 0
 
         # Обновление смещения камеры в зависимости от позиции игрока
-        camera_offset_x = max(0, player_pos[0] - WIDTH // 2)  # +25 для центрирования игрока
+        camera_offset_x = max(0, player_pos[0] - WIDTH // 2)
         camera_offset_y = max(0, player_pos[1] - HEIGHT // 2)
 
         # Отрисовка фона
@@ -681,11 +692,14 @@ def game_loop(coord_platform, door, enemie, plats):
             # Проверка на столкновение с игроком
             if enemy.alive and pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(enemy.rect):
                 hp_player -= damage_enemy_pitch
+                player_pos[0] -= 17 * direction
+                player_pos[1] -= 5 * direction
                 print('Получен урон. HP:', hp_player)
                 if hp_player <= 0:
                     print("Игрок умер!")
+                    hp_player = 100
                     main_menu()
-                # Обновление и отрисовка пуль
+            # Обновление и отрисовка пуль
             for bullet in bullets[:]:
                 bullet.update()
                 bullet.draw(screen, camera_offset_x, camera_offset_y, arrow_r_image, arrow_l_image)
@@ -700,13 +714,13 @@ def game_loop(coord_platform, door, enemie, plats):
                             enemy.alive = False
 
                         # Удаление пуль за пределами экрана
-                if bullet.rect.x > WIDTH:
+                if bullet.rect.x > WIDTH * 5:
                     bullet.alive = False
 
             bullets = [bullet for bullet in bullets if bullet.alive]  # Удаляем мертвые пули
 
         # Отрисовка двери
-        door_exit = screen.blit(exit_door_image, (WIDTH - 200 - camera_offset_x, HEIGHT - 530 - camera_offset_y))
+        screen.blit(exit_door_image, (door[0] - 25 - camera_offset_x, door[1] - 30 - camera_offset_y))
 
         # Проверка на столкновение с дверью
         if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door):
@@ -716,6 +730,8 @@ def game_loop(coord_platform, door, enemie, plats):
         # pygame.draw.rect(screen, RED, (player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50))
         player_width = 50  # Ширина игрока
         player_rect = pygame.Rect(player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, player_width, 50)
+        draw_text(f'{int(hp_player)}', miles_font, WHITE, screen, player_pos[0] + 10 - camera_offset_x,
+                  player_pos[1] - 30 - camera_offset_y)
 
         # Если направление -1 (влево), сдвигаем прямоугольник влево
         if direction == -1:
@@ -910,12 +926,21 @@ def settings_menu():
 
         # Отображение фона меню настроек
         screen_back_ground()
+
+        surf3 = pygame.Surface((260, HEIGHT))
+        surf3.fill(DARK_GRAY)
+        surf3.set_alpha(200)
+        screen.blit(surf3, (WIDTH - 260, 75))
+
         # Заголовок настроек
         draw_text('Настройки:', font, WHITE, screen, WIDTH // 2 - 150, 20)
 
         # Уровень сложности
         draw_text('Уровень сложности:', small_font, WHITE, screen, 20, 100)
         draw_text('Разрешение экрана:', small_font, WHITE, screen, 20, 175)
+        draw_text('Статистика:', small_font, WHITE, screen, WIDTH - 250, 80)
+        draw_text('Врагов убито:', miles_font, WHITE, screen, WIDTH - 250, 130)
+        draw_text('Уровней пройдено:', miles_font, WHITE, screen, WIDTH - 250, 180)
 
         back_button = screen.blit(back_button_image, (10, HEIGHT - 70))
         draw_text('Назад', small_font, DIRTY_WHITE, screen, back_button.x + 100, back_button.y + 5)
@@ -930,6 +955,7 @@ def settings_menu():
                 main_menu()
 
         # Обновление экрана
+        clock.tick(FPS)
         pygame.display.flip()
 
 
