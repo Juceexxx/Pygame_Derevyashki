@@ -3,7 +3,7 @@ import sys
 import os
 import sqlite3
 import pygame_gui
-from cv2 import CAP_PROP_FRAME_HEIGHT, cvtColor, COLOR_BGR2RGB, VideoCapture, CAP_PROP_FRAME_WIDTH
+from cv2 import CAP_PROP_FRAME_HEIGHT, cvtColor, COLOR_BGR2RGB, VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FPS
 
 from Animation import AnimatedSprite
 from Enemy import Enemy
@@ -33,10 +33,6 @@ FPS = 60
 BULLET_SPEED = 5
 HP = 100
 DAMAGE = 100
-FONT_SIZE = 40
-SMALL_FONT_SIZE = 30
-RECT_PADDING = 10
-RECT_WIDTH = 5  # Ширина контура квадрата
 zhmuriki = 0
 
 # Настройка экрана в полноэкранном режиме
@@ -75,7 +71,7 @@ def load_image(name):
 
 
 LPS_image = load_image('LPS.png')
-LPS_image = pygame.transform.scale(LPS_image, (100, 100))
+LPS_image = pygame.transform.scale(LPS_image, (64 * 5, 16 * 5))
 button_image = load_image('Button.png')
 button_image = pygame.transform.scale(button_image, (300, 70))
 standard_button_image = load_image('Standard_Button.png')
@@ -98,13 +94,25 @@ exit_door_image = load_image('Exit_Door.png')
 exit_door_image = pygame.transform.scale(exit_door_image, (100, 130))
 platform_image = load_image('Platform.png')
 platform_image = pygame.transform.scale(platform_image, (200, 33))
+level_one_image = load_image('Level_One.png')
+level_one_image = pygame.transform.scale(level_one_image, (200, 200))
+level_one_alt_image = load_image('Level_One_Alt.png')
+level_one_alt_image = pygame.transform.scale(level_one_alt_image, (200, 200))
+level_two_image = load_image('Level_Two.png')
+level_two_image = pygame.transform.scale(level_two_image, (200, 200))
+level_two_alt_image = load_image('Level_Two_Alt.png')
+level_two_alt_image = pygame.transform.scale(level_two_alt_image, (200, 200))
 enemy_pitch_r_image = load_image('Enemy_Pitch_R.png')
 enemy_pitch_l_image = load_image('Enemy_Pitch_L.png')
 arrow_r_image = load_image('Arrow_R.png')
 arrow_l_image = load_image('Arrow_L.png')
 grass_image = load_image('Grass.png')
-lp_go = load_image('LP_Go.png')
-lp_go = pygame.transform.scale(lp_go, (64 * 6, 16 * 6))
+# lp_go = load_image('LP_Go.png')
+# lp_go = pygame.transform.scale(lp_go, (64 * 6, 16 * 6))
+lp_go_r_c_images = load_image('LP_Go_R_Crossbow.png')
+lp_go_r_c_images = pygame.transform.scale(lp_go_r_c_images, (64 * 5, 16 * 5))
+lp_go_l_c_images = load_image('LP_Go_L_Crossbow.png')
+lp_go_l_c_images = pygame.transform.scale(lp_go_l_c_images, (64 * 5, 16 * 5))
 background_image = load_image('background.png')
 background_image = pygame.transform.scale(background_image, current_resolution)
 
@@ -153,20 +161,20 @@ def Congrutulations(video_path):
         return
 
     # Получение ширины и высоты видео
-    width = int(cap.get(CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(CAP_PROP_FRAME_HEIGHT))
+    width, height = int(cap.get(CAP_PROP_FRAME_WIDTH)), int(cap.get(CAP_PROP_FRAME_HEIGHT))
 
     # Создание окна Pygame
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Воспроизведение видео")
-    # Основной цикл воспроизведения
-    while True:
-        clock.tick(FPS)
+
+    fps_vid = int(cap.get(CAP_PROP_FPS)) or 30  # Установка FPS видео
+
+    running = True
+    while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                cap.release()
-                pygame.quit()
-                sys.exit()
+                running = False
+
         # Чтение кадра из видео
         ret, frame = cap.read()
         if not ret:
@@ -175,17 +183,21 @@ def Congrutulations(video_path):
         # Преобразование цвета BGR в RGB
         frame = cvtColor(frame, COLOR_BGR2RGB)
 
-        # Преобразование изображения в поверхность Pygame
-        frame_surface = pygame.surfarray.make_surface(frame)
+        # Поворот изображения для корректного отображения в Pygame
+        frame = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
 
         # Отображение кадра на экране
-        screen.blit(frame_surface, (0, 0))
+        screen.blit(frame, (0, 0))
         pygame.display.flip()
+
+        clock.tick(fps_vid)
 
     # Освобождение ресурсов
     cap.release()
-    pygame.quit()
-    sys.exit()
+
+    # После завершения видео вызываем главное меню
+    pygame.display.set_mode(current_resolution)
+    main_menu()
 
 
 def login_text():
@@ -470,58 +482,38 @@ camera_offset_y = 0
 
 
 # Функция выбора уровня
+
 def level_selection_menu():
-    levels = ["Уровень 1", "Уровень 2"]
-    rects = []
-
-    # Параметры квадратов
-    rect_width = 200
-    rect_height = 200
-    rect_x = WIDTH // 2 - rect_width // 2
-
-    for i in range(len(levels)):
-        rect_y = HEIGHT // 2 - (len(levels) * (rect_height + RECT_PADDING)) // 2 + i * (rect_height + RECT_PADDING)
-        rects.append(pygame.Rect(rect_x, rect_y, rect_width, rect_height))
+    levels = [
+        {"image": level_one_image, "alt": level_one_alt_image, "pos": (WIDTH // 2 - 220, HEIGHT // 2 - 100),
+         "action": level_one},
+        {"image": level_two_image, "alt": level_two_alt_image, "pos": (WIDTH // 2, HEIGHT // 2 - 100),
+         "action": level_two}
+    ]
 
     while True:
+        screen_back_ground()
+        draw_text("Выберите уровень", font, WHITE, screen, WIDTH // 2 - 200, HEIGHT // 2 - 300)
+        draw_text("Нажмите Esc для выхода", small_font, WHITE, screen, WIDTH // 2 - 200, HEIGHT - 50)
+
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_click = False
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Левый клик мыши
-                    mouse_pos = event.pos
-                    for i, rect in enumerate(rects):
-                        if rect.collidepoint(mouse_pos):
-                            if i == 0:
-                                level_one()
-                            elif i == 1:
-                                level_two()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:  # Выход из выбора уровня
-                    main_menu()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_click = True
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                main_menu()
 
-        # Отображение фона
-        screen_back_ground()
-
-        # Отображение текста выбора уровня
-        draw_text("Выберите уровень", font, WHITE, screen, WIDTH // 2 - 200, HEIGHT // 2 - 300)
-
-        for i, level in enumerate(levels):
-            rect = rects[i]
-            # Проверка на наведение мыши для изменения цвета
-            is_hovered = rect.collidepoint(pygame.mouse.get_pos())
-            color = RED if is_hovered else "GREEN"
-
-            # Рисуем квадрат без заливки (только контур)
-            pygame.draw.rect(screen, color, rect, RECT_WIDTH)
-
-            # Рисуем текст на экране
-            draw_text(level, small_font, WHITE,
-                      screen, rect.x + RECT_PADDING, rect.y + RECT_PADDING)
-
-        draw_text("Нажмите Esc для выхода", small_font, WHITE, screen, WIDTH // 2 - 180,
-                  HEIGHT // 2 + len(levels) * (rect_height + RECT_PADDING))
+        for level in levels:
+            rect = screen.blit(level["image"], level["pos"])
+            if rect.collidepoint(mouse_pos):
+                screen.blit(level["alt"], level["pos"])
+                if mouse_click:
+                    level["action"]()
 
         pygame.display.flip()
 
@@ -541,6 +533,7 @@ def level_one():
                  [1600, HEIGHT - 175, 200, 20],
                  [1800, HEIGHT - 300, 200, 20],
                  [1700, HEIGHT - 425, 200, 20],
+                 [0, HEIGHT, 2000, 20],
                  [1400, HEIGHT - 450, 200, 20],
                  ]
 
@@ -589,12 +582,11 @@ def level_two():
 
 # Основной игровой цикл
 def game_loop(coord_platform, door, enemie, plats):
-    global screen, camera_offset_x, camera_offset_y, hp_player, hp_enemy_pitch
-    # Инициализация Pygame
-    pygame.init()
+    global screen, camera_offset_x, camera_offset_y, hp_player, hp_enemy_pitch, all_sprites
+
+
 
     # Создание окна
-
     pygame.display.set_caption("Кубик красный")
 
     # Переменные игрока
@@ -605,12 +597,17 @@ def game_loop(coord_platform, door, enemie, plats):
     # Список для пуль
     bullets = []
     zhmuriki = 0
-    proshel_urovney= 0
+    proshel_urovney = 0
 
     # Основной игровой цикл
     difficulty()
     count_frame = 0.1
-    player_r = AnimatedSprite(all_sprites, count_frame, lp_go, 4, 1, 10 - camera_offset_x, 10 - camera_offset_y)
+    # Создаем два спрайта, но добавляем в группу только один (по умолчанию для движения вправо)
+    player_r = AnimatedSprite(all_sprites, count_frame, lp_go_r_c_images, 4, 1, player_pos[0], player_pos[1])
+    player_l = AnimatedSprite(all_sprites, count_frame, lp_go_l_c_images, 4, 1, player_pos[0], player_pos[1])
+    current_player = player_r
+    all_sprites.add(current_player)
+    # player_stay = AnimatedSprite(all_sprites, count_frame, LPS_image, 1, 1, player_pos[0], player_pos[1])
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -620,21 +617,34 @@ def game_loop(coord_platform, door, enemie, plats):
                 if event.key == pygame.K_SPACE and on_ground:
                     player_speed_y = -16
                 if event.key == pygame.K_RETURN:  # Стрельба по нажатию Enter
-                    bullet = Bullet(player_pos[0] + (50 if direction == 1 else -10), player_pos[1] + 20, direction,
+                    bullet = Bullet(player_pos[0] + (50 if direction == 1 else -10) + 5, player_pos[1] + 7, direction,
                                     BULLET_SPEED)
                     bullets.append(bullet)
 
-        # Управление движением
         keys = pygame.key.get_pressed()
+        # Если движение влево:
         if keys[pygame.K_LEFT]:
             player_pos[0] -= 5
-            direction = -1  # Изменяем направление на влево
+            if direction != -1:
+                direction = -1
+                # Переключаем текущий спрайт на левый
+                all_sprites.remove(current_player)
+                current_player = player_l
+                all_sprites.add(current_player)
+            current_player.rect.topleft = (player_pos[0] - 10 - camera_offset_x, player_pos[1] - 30 - camera_offset_y)
+            current_player.update()
+        # Если движение вправо:
         elif keys[pygame.K_RIGHT]:
             player_pos[0] += 5
-            direction = 1  # Изменяем направление на вправо
+            if direction != 1:
+                direction = 1
+                # Переключаем текущий спрайт на правый
+                all_sprites.remove(current_player)
+                current_player = player_r
+                all_sprites.add(current_player)
+            current_player.rect.topleft = (player_pos[0] - 10 - camera_offset_x, player_pos[1] - 30 - camera_offset_y)
+            current_player.update()
 
-        else:
-            pass
 
         # Проверка на границы экрана
         if player_pos[0] < 0:            player_pos[0] = 0
@@ -709,7 +719,7 @@ def game_loop(coord_platform, door, enemie, plats):
                         if enemy.hp <= 0:
                             enemy.alive = False
                             zhmuriki += 1
-                            update_enemies_killed(name_user,zhmuriki)
+                            update_enemies_killed(name_user, zhmuriki)
 
                         # Удаление пуль за пределами экрана
                 if bullet.rect.x > WIDTH * 5:
@@ -718,27 +728,28 @@ def game_loop(coord_platform, door, enemie, plats):
             bullets = [bullet for bullet in bullets if bullet.alive]  # Удаляем мертвые пули
 
         # Отрисовка двери
-        screen.blit(exit_door_image, (door[0] - 25 - camera_offset_x, door[1] - 30 - camera_offset_y))
+        screen.blit(exit_door_image, (door[0] - camera_offset_x, door[1] - camera_offset_y))
 
         # Проверка на столкновение с дверью
         if pygame.Rect(player_pos[0], player_pos[1], 50, 50).colliderect(door):
-            proshel_urovney +=1
-            update_levels_completed(name_user,proshel_urovney)
+            proshel_urovney += 1
+            update_levels_completed(name_user, proshel_urovney)
             print("Вы прошли через дверь! Игра окончена.")
             Congrutulations("sigmaboy1.mp4")
         # Отрисовка игрока с учетом смещения экрана
-        # pygame.draw.rect(screen, RED, (player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50))
         player_rect = pygame.Rect(player_pos[0] - camera_offset_x, player_pos[1] - camera_offset_y, 50, 50)
         draw_text(f'{int(hp_player)}', miles_font, WHITE, screen, player_pos[0] + 10 - camera_offset_x,
                   player_pos[1] - 30 - camera_offset_y)
 
         # Если направление -1 (влево), сдвигаем прямоугольник влево
-        if direction == -1: player_rect.x -= 1
-        pygame.draw.rect(screen, "RED", player_rect)
+        # if direction == -1: player_rect.x -= 1
+        # pygame.draw.rect(screen, "RED", player_rect)
 
-        player_r.update()
         # Орисовка спрайтов
+        current_player.rect.topleft = (player_pos[0] - 10 - camera_offset_x, player_pos[1] - 30 - camera_offset_y)
+        current_player.update()
         all_sprites.draw(screen)
+
         clock.tick(FPS)
         pygame.display.flip()
 
