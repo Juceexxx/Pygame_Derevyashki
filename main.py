@@ -1002,7 +1002,7 @@ def continue_game(coord_platform, door, enemies, plats):
         for platform in plats:
             platform.move(-camera_offset_x, -camera_offset_y)
             for pl in coord_platform:
-                screen.blit(platform_image, (pl[0] - camera_offset_x, pl[1] - 13 - camera_offset_y))
+                screen.blit(platform_image, (pl[0] - camera_offset_x, pl[1] - 8 - camera_offset_y))
         # Обновление и отрисовка NPC
         for enemy in enemies[:]:  # Используем срез для безопасного удаления элементов из списка во время итерации
             enemy.update()
