@@ -93,7 +93,7 @@ sign_in_button_image = pygame.transform.scale(sign_in_button_image, (200, 62))
 exit_door_image = load_image('Exit_Door.png')
 exit_door_image = pygame.transform.scale(exit_door_image, (100, 130))
 platform_image = load_image('Platform.png')
-platform_image = pygame.transform.scale(platform_image, (200, 33))
+platform_image = pygame.transform.scale(platform_image, (200, 27))
 level_one_image = load_image('Level_One.png')
 level_one_image = pygame.transform.scale(level_one_image, (200, 200))
 level_one_alt_image = load_image('Level_One_Alt.png')
@@ -820,7 +820,7 @@ def game_loop(coord_platform, door, enemies, plats):
         for platform in plats:
             platform.move(-camera_offset_x, -camera_offset_y)
             for pl in coord_platform:
-                screen.blit(platform_image, (pl[0] - camera_offset_x, pl[1] - 13 - camera_offset_y))
+                screen.blit(platform_image, (pl[0] - camera_offset_x, pl[1] - 8 - camera_offset_y))
         # Обновление и отрисовка NPC
         for enemy in enemies[:]:  # Используем срез для безопасного удаления элементов из списка во время итерации
             enemy.update()
@@ -1000,8 +1000,7 @@ def continue_game(coord_platform, door, enemies, plats):
 
         # Отрисовка платформ с учетом смещения экрана
         for platform in plats:
-            adjusted_platform = platform.move(-camera_offset_x, -camera_offset_y)
-            pygame.draw.rect(screen, GREEN, adjusted_platform)
+            platform.move(-camera_offset_x, -camera_offset_y)
             for pl in coord_platform:
                 screen.blit(platform_image, (pl[0] - camera_offset_x, pl[1] - 13 - camera_offset_y))
         # Обновление и отрисовка NPC
