@@ -17,7 +17,7 @@ infoObject = pygame.display.Info()
 WIDTH_1, HEIGHT_1 = infoObject.current_w, infoObject.current_h
 current_resolution = WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Древесные Рыцари")
+pygame.display.set_caption("Forest Secrets")
 all_sprites = pygame.sprite.Group()
 manager = pygame_gui.UIManager(current_resolution)
 clock = pygame.time.Clock()
@@ -541,7 +541,7 @@ def main_menu():
         surf(DARK_GRAY, 0, 0, WIDTH, 70)
 
         # Отображение заголовка
-        draw_text('Деревяшки', font, WHITE, screen, grey_rect.x + 15, grey_rect.y + 10)
+        draw_text('Forest Secrets', pygame.font.Font('Data/Bitcell.ttf', 68), WHITE, screen, grey_rect.x + 15, grey_rect.y + 10)
 
         # Создание кнопок
         sign_in_button = screen.blit((pygame.transform.scale(button_r_image, (200, 62))), (WIDTH - 190, 5))
@@ -783,7 +783,7 @@ def game_loop(coord_platform, door, enemies, plats):
     global screen, camera_offset_x, camera_offset_y, hp_player, hp_en_pitch, all_sprites
 
     # Создание окна
-    pygame.display.set_caption("Кубик красный")
+    pygame.display.set_caption("Forest Secrets")
 
     # Переменные игрока
     player_pos = [10, HEIGHT - 50]
@@ -962,7 +962,7 @@ def continue_game(coord_platform, door, enemies, plats):
     global screen, camera_offset_x, camera_offset_y, hp_player, hp_en_pitch, all_sprites
 
     # Создание окна
-    pygame.display.set_caption("Кубик красный")
+    pygame.display.set_caption("Forest Secrets")
 
     # Переменные игрока
     player_pos = [10, HEIGHT - 50]
