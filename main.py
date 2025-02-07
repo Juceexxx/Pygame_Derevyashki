@@ -355,8 +355,8 @@ def registration_menu():
         back_button = screen.blit((pygame.transform.scale(button_r_image, (220, 60))), (WIDTH - 210, 0))
 
         # Создание затемнения
-        surf(DARK_GRAY, 0, 150, WIDTH, 200)
-        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, 100)
+        surf(DARK_GRAY, 0, 150, WIDTH, HEIGHT // 2 - 100)
+        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, HEIGHT // 2)
         surf(DARK_GRAY, username_button.x - 5, username_button.y, username_button.w, username_button.h)
         surf(DARK_GRAY, password_button.x - 5, password_button.y, password_button.w, password_button.h)
 
@@ -443,8 +443,8 @@ def login_menu():
         exin_in_menu_button = screen.blit(button_image, (10, 70))
 
         # Создание затемнения
-        surf(DARK_GRAY, 0, 150, WIDTH, 200)
-        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, 100)
+        surf(DARK_GRAY, 0, 150, WIDTH, HEIGHT // 2 - 100)
+        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, HEIGHT // 2)
         surf(DARK_GRAY, username_button.x - 5, username_button.y, username_button.w, username_button.h)
         surf(DARK_GRAY, password_button.x - 5, password_button.y, password_button.w, password_button.h)
 
