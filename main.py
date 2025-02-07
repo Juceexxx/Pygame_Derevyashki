@@ -3,7 +3,7 @@ import sys
 import os
 import sqlite3
 import pygame_gui
-from cv2 import CAP_PROP_FRAME_HEIGHT, cvtColor, COLOR_BGR2RGB, VideoCapture, CAP_PROP_FRAME_WIDTH, CAP_PROP_FPS
+import cv2
 
 from Animation import AnimatedSprite
 from Enemy import Enemy
@@ -77,7 +77,7 @@ button_image = pygame.transform.scale(button_image, (300, 70))
 standard_button_image = load_image('Standard_Button.png')
 standard_button_image = pygame.transform.scale(standard_button_image, (300, 70))
 back_button_image = load_image('Back_Button.png')
-back_button_image = pygame.transform.scale(back_button_image, (240, 60))
+back_button_image = pygame.transform.scale(back_button_image, (300, 70))
 new_button_image = load_image('New_Button.png')
 new_button_image = pygame.transform.scale(new_button_image, (300, 70))
 settings_button_image = load_image('Settings_Button.png')
@@ -87,9 +87,9 @@ exit_button_image = pygame.transform.scale(exit_button_image, (300, 70))
 next_button_image = load_image('Next_Button.png')
 next_button_image = pygame.transform.scale(next_button_image, (300, 70))
 button_r_image = load_image('Button_R.png')
-button_r_image = pygame.transform.scale(button_r_image, (200, 62))
+button_r_image = pygame.transform.scale(button_r_image, (300, 70))
 sign_in_button_image = load_image('Sign_In_Button.png')
-sign_in_button_image = pygame.transform.scale(sign_in_button_image, (200, 62))
+sign_in_button_image = pygame.transform.scale(sign_in_button_image, (300, 70))
 exit_door_image = load_image('Exit_Door.png')
 exit_door_image = pygame.transform.scale(exit_door_image, (100, 130))
 platform_image = load_image('Platform.png')
@@ -173,19 +173,19 @@ def final_video(video_path):
     pygame.init()
 
     # Получение информации о видео
-    cap = VideoCapture(video_path)
+    cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("Ошибка: Не удалось открыть видео.")
         return
 
     # Получение ширины и высоты видео
-    width, height = int(cap.get(CAP_PROP_FRAME_WIDTH)), int(cap.get(CAP_PROP_FRAME_HEIGHT))
+    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     # Создание окна Pygame
-    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_mode((width, height))
     pygame.display.set_caption("Воспроизведение видео")
 
-    fps_vid = int(cap.get(CAP_PROP_FPS)) or 30  # Установка FPS видео
+    fps_vid = int(cap.get(cv2.CAP_PROP_FPS)) or 30  # Установка FPS видео
 
     running = True
     while running:
@@ -199,7 +199,7 @@ def final_video(video_path):
             break  # Если кадры закончились, выходим из цикла
 
         # Преобразование цвета BGR в RGB
-        frame = cvtColor(frame, COLOR_BGR2RGB)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         # Поворот изображения для корректного отображения в Pygame
         frame = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
@@ -311,6 +311,7 @@ def get_user_lvl(username):
 
 # Функция для регистрации пользователя
 def registration_menu():
+    error = ''
     username = ""
     password = ""
     input_active = "username"  # Переменная для отслеживания активного поля
@@ -324,7 +325,8 @@ def registration_menu():
                     if add_user(username, password):
                         login_menu()  # Переключение на экран входа после успешной регистрации
                     else:
-                        print("Пользователь с таким именем уже существует.")  # Можно добавить отображение на экране
+                        error = 'Пользователь с таким именем уже существует!'
+                        print("Пользователь с таким именем уже существует!")
                 elif event.key == pygame.K_BACKSPACE:
                     if input_active == "username" and len(username) > 0:
                         username = username[:-1]
@@ -332,35 +334,69 @@ def registration_menu():
                         password = password[:-1]
                 elif event.key == pygame.K_TAB:  # Переключение между полями
                     input_active = "password" if input_active == "username" else "username"
-                elif event.key == pygame.K_ESCAPE:  # Выход из выбора уровня
+                elif event.key == pygame.K_ESCAPE:
                     login_menu()
                 else:
                     if input_active == "username":
                         username += event.unicode
                     elif input_active == "password":
                         password += event.unicode
+
         # Отображение фона
-        screen.fill(WHITE)
+        screen_back_ground()
+
+        # Обработка нажатий кнопок и их изменение
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_click = pygame.mouse.get_pressed()
+
+        # Кнопки
+        username_button = pygame.Rect(40, HEIGHT // 2 - 90, 600, 40)
+        password_button = pygame.Rect(40, HEIGHT // 2 - 45, 600, 40)
+        back_button = screen.blit((pygame.transform.scale(button_r_image, (220, 60))), (WIDTH - 210, 0))
+
+        # Создание затемнения
+        surf(DARK_GRAY, 0, 150, WIDTH, 200)
+        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, 100)
+        surf(DARK_GRAY, username_button.x - 5, username_button.y, username_button.w, username_button.h)
+        surf(DARK_GRAY, password_button.x - 5, password_button.y, password_button.w, password_button.h)
 
         # Отображение текста
-        draw_text("Регистрация", font, DARK_GRAY, screen, WIDTH // 2 - 150, HEIGHT // 2 - 100)
-        draw_text("Имя пользователя: " + username, small_font, DARK_GRAY, screen, WIDTH // 2 - 150, HEIGHT // 2 - 40)
-        draw_text("Пароль: " + "*" * len(password), small_font, DARK_GRAY, screen, WIDTH // 2 - 150, HEIGHT // 2)
-        # Кнопка "Назад"
-        draw_text("Назад", small_font, DARK_GRAY, screen, WIDTH // 2 - 40, HEIGHT // 2 + 40)
+        if error == 'Пользователь с таким именем уже существует!':
+            draw_text('Пользователь с таким именем уже существует!', small_font, WHITE, screen, password_button.x,
+                      password_button.y + 40)
+        draw_text('Для регистрации нажмите: "Enter"', small_font, WHITE, screen, WIDTH // 2 - 220, HEIGHT - 50)
+        draw_text("Регистрация:", font, WHITE, screen, WIDTH // 2 - 170, HEIGHT // 2 - 155)
+        draw_text('Имя пользователя: ' + username, small_font, WHITE, screen, username_button.x, username_button.y)
+        draw_text('Пароль: ' + '*' * len(password), small_font, WHITE, screen, password_button.x, password_button.y)
+        draw_text('Назад', small_font, DIRTY_WHITE, screen, back_button.x + 90, back_button.y + 7)
+        if username_button.collidepoint(mouse_pos):
+            if mouse_click[0]:
+                if input_active == "password":
+                    input_active = "username"
+        if password_button.collidepoint(mouse_pos):
+            if mouse_click[0]:
+                if input_active == "username":
+                    input_active = "password"
+        if back_button.collidepoint(mouse_pos):
+            screen.blit((pygame.transform.scale(back_button_image, (220, 60))), (back_button.x, back_button.y))
+            draw_text('Назад', small_font, DIRTY_WHITE, screen, back_button.x + 90, back_button.y + 7)
+            if mouse_click[0]:
+                login_menu()
 
         # Подсветка активного поля
         if input_active == "username":
-            draw_text("←", small_font, DARK_GRAY, screen, WIDTH // 2 - 160, HEIGHT // 2 - 40)
+            draw_text("->", small_font, WHITE, screen, 5, HEIGHT // 2 - 90)
         else:
-            draw_text("←", small_font, DARK_GRAY, screen, WIDTH // 2 - 160, HEIGHT // 2)
+            draw_text("->", small_font, WHITE, screen, 5, HEIGHT // 2 - 45)
 
+        clock.tick(FPS)
         pygame.display.flip()
 
 
 # Функция для входа пользователя
 def login_menu():
     global name_user, entry
+    error = ''
     username = ""
     password = ""
     input_active = "username"  # Переменная для отслеживания активного поля
@@ -376,7 +412,8 @@ def login_menu():
                         entry = True
                         main_menu()
                     else:
-                        print("Неверное имя пользователя или пароль.")  # Можно добавить отображение на экране
+                        error = "Неверное имя пользователя или пароль!"
+                        print("Неверное имя пользователя или пароль!")
                 elif event.key == pygame.K_BACKSPACE:
                     if input_active == "username" and len(username) > 0:
                         username = username[:-1]
@@ -384,11 +421,8 @@ def login_menu():
                         password = password[:-1]
                 elif event.key == pygame.K_TAB:  # Переключение между полями
                     input_active = "password" if input_active == "username" else "username"
-                elif event.key == pygame.K_r:  # Клавиша 'R' для перехода к регистрации
-                    registration_menu()
-                elif event.key == pygame.K_ESCAPE:  # Выход из выбора уровня
+                elif event.key == pygame.K_ESCAPE:
                     main_menu()
-
                 else:
                     if input_active == "username":
                         username += event.unicode
@@ -396,22 +430,65 @@ def login_menu():
                         password += event.unicode
 
         # Отображение фона
-        screen.fill(WHITE)
+        screen_back_ground()
+
+        # Обработка нажатий кнопок и их изменение
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_click = pygame.mouse.get_pressed()
+
+        # Кнопки
+        username_button = pygame.Rect(40, HEIGHT // 2 - 90, 600, 40)
+        password_button = pygame.Rect(40, HEIGHT // 2 - 45, 600, 40)
+        registration_button = screen.blit(button_image, (WIDTH - 300, 70))
+        exin_in_menu_button = screen.blit(button_image, (10, 70))
+
+        # Создание затемнения
+        surf(DARK_GRAY, 0, 150, WIDTH, 200)
+        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, 100)
+        surf(DARK_GRAY, username_button.x - 5, username_button.y, username_button.w, username_button.h)
+        surf(DARK_GRAY, password_button.x - 5, password_button.y, password_button.w, password_button.h)
 
         # Отображение текста
-        draw_text('Нажмите: "ESC" чтобы выйти', small_font, DARK_GRAY, screen, 50, HEIGHT - 100)
-        draw_text('Нажмите: "TAB" для переключения', small_font, DARK_GRAY, screen, 50, HEIGHT - 75)
-        draw_text('Нажмите: "R" для регистрации', small_font, DARK_GRAY, screen, 50, HEIGHT - 50)
-        draw_text('Вход', font, DARK_GRAY, screen, WIDTH // 2 - 50, HEIGHT // 2 - 100)
-        draw_text('Имя пользователя: ' + username, small_font, DARK_GRAY, screen, WIDTH // 2 - 150, HEIGHT // 2 - 40)
-        draw_text('Пароль: ' + '*' * len(password), small_font, DARK_GRAY, screen, WIDTH // 2 - 150, HEIGHT // 2)
+        if error == 'Неверное имя пользователя или пароль!':
+            draw_text('Неверное имя пользователя или пароль!', small_font, WHITE, screen, password_button.x,
+                      password_button.y + 40)
+        draw_text('Для входа нажмите: "Enter"', small_font, WHITE, screen, WIDTH // 2 - 200, HEIGHT - 50)
+        draw_text('Вход', font, WHITE, screen, WIDTH // 2 - 60, HEIGHT // 2 - 155)
+        draw_text('Имя пользователя: ' + username, small_font, WHITE, screen, username_button.x, username_button.y)
+        draw_text('Пароль: ' + '*' * len(password), small_font, WHITE, screen, password_button.x, password_button.y)
+        draw_text('Регистрация', small_font, DIRTY_WHITE, screen, registration_button.x + 22,
+                  registration_button.y + 13)
+        draw_text('Выход в меню', small_font, DIRTY_WHITE, screen, exin_in_menu_button.x + 10,
+                  exin_in_menu_button.y + 13)
+
+        if username_button.collidepoint(mouse_pos):
+            if mouse_click[0]:
+                if input_active == "password":
+                    input_active = "username"
+        if password_button.collidepoint(mouse_pos):
+            if mouse_click[0]:
+                if input_active == "username":
+                    input_active = "password"
+        if registration_button.collidepoint(mouse_pos):
+            screen.blit(next_button_image, (registration_button.x, registration_button.y))
+            draw_text('Регистрация ', small_font, DIRTY_WHITE, screen, registration_button.x + 22,
+                      registration_button.y + 13)
+            if mouse_click[0]:
+                registration_menu()
+        if exin_in_menu_button.collidepoint(mouse_pos):
+            screen.blit(exit_button_image, (exin_in_menu_button.x, exin_in_menu_button.y))
+            draw_text('Выход в меню', small_font, DIRTY_WHITE, screen, exin_in_menu_button.x + 10,
+                      exin_in_menu_button.y + 13)
+            if mouse_click[0]:
+                main_menu()
 
         # Подсветка активного поля
         if input_active == "username":
-            draw_text("←", small_font, DARK_GRAY, screen, WIDTH // 2 - 160, HEIGHT // 2 - 40)
+            draw_text("->", small_font, WHITE, screen, 5, HEIGHT // 2 - 90)
         else:
-            draw_text("←", small_font, DARK_GRAY, screen, WIDTH // 2 - 160, HEIGHT // 2)
+            draw_text("->", small_font, WHITE, screen, 5, HEIGHT // 2 - 45)
 
+        clock.tick(FPS)
         pygame.display.flip()
 
 
@@ -467,7 +544,7 @@ def main_menu():
         draw_text('Деревяшки', font, WHITE, screen, grey_rect.x + 15, grey_rect.y + 10)
 
         # Создание кнопок
-        sign_in_button = screen.blit(button_r_image, (WIDTH - 190, 5))
+        sign_in_button = screen.blit((pygame.transform.scale(button_r_image, (200, 62))), (WIDTH - 190, 5))
         start_button = screen.blit(button_image, (grey_rect.x + 12, grey_rect.y + 93))
         continue_button = screen.blit(button_image, (grey_rect.x + 12, grey_rect.y + 163))
         settings_button = screen.blit(button_image, (grey_rect.x + 12, grey_rect.y + 233))
@@ -477,6 +554,7 @@ def main_menu():
         draw_text('Настройки', small_font, DIRTY_WHITE, screen, settings_button.x + 45, settings_button.y + 13)
         draw_text('Выход', small_font, DIRTY_WHITE, screen, exit_button.x + 65, exit_button.y + 13)
         draw_text('Войти', small_font, DIRTY_WHITE, screen, sign_in_button.x + 83, sign_in_button.y + 9)
+        draw_text('Alpha v1.0', miles_font, DIRTY_WHITE, screen, 10, HEIGHT - 30)
         login_text()
         # Обработка нажатий кнопок и их изменение
         mouse_pos = pygame.mouse.get_pos()
@@ -504,7 +582,7 @@ def main_menu():
             if mouse_click[0]:
                 settings_menu()  # Вызов функции настроек
         elif sign_in_button.collidepoint(mouse_pos):
-            screen.blit(sign_in_button_image, (sign_in_button.x, sign_in_button.y))
+            screen.blit(pygame.transform.scale(sign_in_button_image, (200, 62)), (sign_in_button.x, sign_in_button.y))
             draw_text('Войти', small_font, DIRTY_WHITE, screen, sign_in_button.x + 83, sign_in_button.y + 9)
             if mouse_click[0]:
                 login_menu()
@@ -518,9 +596,8 @@ def main_menu():
         # Обновление экрана
         pygame.display.flip()
 
-        # Функция выбора уровня
 
-
+# Функция выбора уровня
 def level_selection_menu(continue_g):
     levels = [
         {"image": level_one_image, "alt": level_one_alt_image, "pos": (WIDTH // 2 - 220, HEIGHT // 2 - 100),
@@ -531,8 +608,8 @@ def level_selection_menu(continue_g):
 
     while True:
         screen_back_ground()
-        draw_text("Выберите уровень", font, WHITE, screen, WIDTH // 2 - 200, HEIGHT // 2 - 300)
-        draw_text("Нажмите Esc для выхода", small_font, WHITE, screen, WIDTH // 2 - 200, HEIGHT - 50)
+        draw_text("Выберите уровень", font, WHITE, screen, WIDTH // 2 - 225, HEIGHT // 2 - 300)
+        draw_text('Нажмите "Esc" для выхода', small_font, WHITE, screen, WIDTH // 2 - 200, HEIGHT - 50)
 
         mouse_pos = pygame.mouse.get_pos()
         mouse_click = False
@@ -658,6 +735,9 @@ def pause_game():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    paused = False
 
         # Обработка нажатий кнопок и их изменение
         mouse_pos = pygame.mouse.get_pos()
@@ -672,7 +752,7 @@ def pause_game():
 
         draw_text('Продолжить', small_font, DIRTY_WHITE, screen, continue_button.x + 32, continue_button.y + 13)
         draw_text('Выход', small_font, DIRTY_WHITE, screen, exit_button.x + 65, exit_button.y + 13)
-        draw_text('Выход в меню', small_font, DIRTY_WHITE, screen, exin_in_menu_button.x + 32,
+        draw_text('Выход в меню', small_font, DIRTY_WHITE, screen, exin_in_menu_button.x + 10,
                   exin_in_menu_button.y + 13)
         draw_text("Игра на паузе", small_font, WHITE, screen, WIDTH // 2 - 100, 50)
 
@@ -683,7 +763,7 @@ def pause_game():
                 paused = False
         if exin_in_menu_button.collidepoint(mouse_pos):
             screen.blit(exit_button_image, (exin_in_menu_button.x, exin_in_menu_button.y))
-            draw_text('Выход в меню', small_font, DIRTY_WHITE, screen, exin_in_menu_button.x + 32,
+            draw_text('Выход в меню', small_font, DIRTY_WHITE, screen, exin_in_menu_button.x + 10,
                       exin_in_menu_button.y + 13)
             if mouse_click[0]:
                 all_sprites.empty()
@@ -710,9 +790,7 @@ def game_loop(coord_platform, door, enemies, plats):
     player_speed_y = 0
     on_ground = False
     direction = 1  # Направление игрока (1 - вправо, -1 - влево)
-    # Список для пуль
-    bullets_list = []
-    dead_bot = 0
+    bullets_list = []  # Список для пуль
     completed_level = 0
     player_state = 'stand'
 
@@ -847,8 +925,7 @@ def game_loop(coord_platform, door, enemies, plats):
                         enemy.hp -= damage_player
                         if enemy.hp <= 0:
                             enemy.alive = False
-                            dead_bot += 1
-                            update_enemies_killed(name_user, dead_bot)
+                            update_enemies_killed(name_user, 1)
 
                         # Удаление пуль за пределами экрана
                 if bullet.rect.x > WIDTH * 5:
@@ -892,9 +969,7 @@ def continue_game(coord_platform, door, enemies, plats):
     player_speed_y = 0
     on_ground = False
     direction = 1  # Направление игрока (1 - вправо, -1 - влево)
-    # Список для пуль
-    bullets_list = []
-    dead_bot = 0
+    bullets_list = []  # Список для пуль
     completed_level = 0
     player_state = 'stand'
 
@@ -1029,8 +1104,7 @@ def continue_game(coord_platform, door, enemies, plats):
                         enemy.hp -= damage_player
                         if enemy.hp <= 0:
                             enemy.alive = False
-                            dead_bot += 1
-                            update_enemies_killed(name_user, dead_bot)
+                            update_enemies_killed(name_user, 1)
 
                         # Удаление пуль за пределами экрана
                 if bullet.rect.x > WIDTH * 5:
@@ -1122,8 +1196,8 @@ def settings_menu():
         draw_text('Уровней пройдено:', miles_font, WHITE, screen, WIDTH - 250, 180)
         draw_text(str(*get_user_lvl(name_user)), miles_font, WHITE, screen, WIDTH - 60, 180)
 
-        back_button = screen.blit(back_button_image, (10, HEIGHT - 70))
-        draw_text('Назад', small_font, DIRTY_WHITE, screen, back_button.x + 100, back_button.y + 5)
+        back_button = screen.blit((pygame.transform.scale(button_r_image, (220, 60))), (10, HEIGHT - 70))
+        draw_text('Назад', small_font, DIRTY_WHITE, screen, back_button.x + 90, back_button.y + 7)
 
         manager.draw_ui(screen)
         # Обработка нажатий
@@ -1131,6 +1205,8 @@ def settings_menu():
         mouse_click = pygame.mouse.get_pressed()
 
         if back_button.collidepoint(mouse_pos):
+            screen.blit((pygame.transform.scale(back_button_image, (220, 60))), (back_button.x, back_button.y))
+            draw_text('Назад', small_font, DIRTY_WHITE, screen, back_button.x + 90, back_button.y + 7)
             if mouse_click[0]:
                 main_menu()
 
