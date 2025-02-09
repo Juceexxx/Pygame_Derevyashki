@@ -34,7 +34,7 @@ HP = 100
 DAMAGE = 100
 
 # Переменные по умолчанию
-Version = 'Alpha v1.01'
+Version = 'Alpha v1.02'
 current_difficulty = 'Большой детина'
 entry = False
 name_user = ''
@@ -645,6 +645,10 @@ def level_selection_menu(continue_g):
 
 def level_one(continue_g):
     global ex_level
+
+    # Очистка спрайтов
+    all_sprites.empty()
+
     # Координаты платформ
     plat_co_1 = [[50, HEIGHT - 100, 200, 20],
                  [350, HEIGHT - 200, 200, 20],
