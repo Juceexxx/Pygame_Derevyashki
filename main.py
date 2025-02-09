@@ -34,6 +34,7 @@ HP = 100
 DAMAGE = 100
 
 # Переменные по умолчанию
+Version = 'Alpha v1.01'
 current_difficulty = 'Большой детина'
 entry = False
 name_user = ''
@@ -172,6 +173,9 @@ def final_video(video_path):
     # Инициализация Pygame
     pygame.init()
 
+    # Проверка разрешения экрана
+    checking_fullscreen()
+
     # Получение информации о видео
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -179,10 +183,8 @@ def final_video(video_path):
         return
 
     # Получение ширины и высоты видео
-    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    width_vid, height_vid = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    # Создание окна Pygame
-    pygame.display.set_mode((width, height))
     pygame.display.set_caption("Воспроизведение видео")
 
     fps_vid = int(cap.get(cv2.CAP_PROP_FPS)) or 30  # Установка FPS видео
@@ -204,10 +206,14 @@ def final_video(video_path):
         # Поворот изображения для корректного отображения в Pygame
         frame = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
 
-        # Отображение кадра на экране
-        screen.blit(frame, (0, 0))
+        # Создание окна Pygame и отображение кадра на экране
+        if WIDTH < width_vid or HEIGHT < height_vid:
+            pygame.display.set_mode((width_vid, height_vid))
+            screen.blit(frame, (0, 0))
+        else:
+            screen_back_ground()
+            screen.blit(frame, (WIDTH // 2 - width_vid // 2, HEIGHT // 2 - height_vid // 2))
         pygame.display.flip()
-
         clock.tick(fps_vid)
 
     # Освобождение ресурсов
@@ -352,11 +358,11 @@ def registration_menu():
         # Кнопки
         username_button = pygame.Rect(40, HEIGHT // 2 - 90, 600, 40)
         password_button = pygame.Rect(40, HEIGHT // 2 - 45, 600, 40)
-        back_button = screen.blit((pygame.transform.scale(button_r_image, (220, 60))), (WIDTH - 210, 0))
+        back_button = screen.blit((pygame.transform.scale(button_r_image, (220, 60))), (WIDTH - 210, 10))
 
         # Создание затемнения
-        surf(DARK_GRAY, 0, 150, WIDTH, HEIGHT // 2 - 100)
-        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, HEIGHT // 2)
+        surf(DARK_GRAY, 0, username_button.y - 55, WIDTH, 200)
+        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, 100)
         surf(DARK_GRAY, username_button.x - 5, username_button.y, username_button.w, username_button.h)
         surf(DARK_GRAY, password_button.x - 5, password_button.y, password_button.w, password_button.h)
 
@@ -439,12 +445,12 @@ def login_menu():
         # Кнопки
         username_button = pygame.Rect(40, HEIGHT // 2 - 90, 600, 40)
         password_button = pygame.Rect(40, HEIGHT // 2 - 45, 600, 40)
-        registration_button = screen.blit(button_image, (WIDTH - 300, 70))
-        exin_in_menu_button = screen.blit(button_image, (10, 70))
+        registration_button = screen.blit(button_image, (WIDTH - 300, HEIGHT // 2 - 220))
+        exin_in_menu_button = screen.blit(button_image, (10, HEIGHT // 2 - 220))
 
         # Создание затемнения
-        surf(DARK_GRAY, 0, 150, WIDTH, HEIGHT // 2 - 100)
-        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, HEIGHT // 2)
+        surf(DARK_GRAY, 0, username_button.y - 55, WIDTH, 200)
+        surf(DARK_GRAY, 0, HEIGHT - 100, WIDTH, 100)
         surf(DARK_GRAY, username_button.x - 5, username_button.y, username_button.w, username_button.h)
         surf(DARK_GRAY, password_button.x - 5, password_button.y, password_button.w, password_button.h)
 
@@ -493,7 +499,7 @@ def login_menu():
 
 
 def hello_text_screen():
-    global current_resolution, screen
+    global screen
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -523,7 +529,11 @@ def hello_text_screen():
 
 # Главная функция меню
 def main_menu():
-    global current_resolution, screen
+    global screen
+
+    # Проверка разрешения экрана
+    checking_fullscreen()
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -541,7 +551,8 @@ def main_menu():
         surf(DARK_GRAY, 0, 0, WIDTH, 70)
 
         # Отображение заголовка
-        draw_text('Forest Secrets', pygame.font.Font('Data/Bitcell.ttf', 68), WHITE, screen, grey_rect.x + 15, grey_rect.y + 10)
+        draw_text('Forest Secrets', pygame.font.Font('Data/Bitcell.ttf', 68), WHITE, screen, grey_rect.x + 15,
+                  grey_rect.y + 10)
 
         # Создание кнопок
         sign_in_button = screen.blit((pygame.transform.scale(button_r_image, (200, 62))), (WIDTH - 190, 5))
@@ -554,7 +565,7 @@ def main_menu():
         draw_text('Настройки', small_font, DIRTY_WHITE, screen, settings_button.x + 45, settings_button.y + 13)
         draw_text('Выход', small_font, DIRTY_WHITE, screen, exit_button.x + 65, exit_button.y + 13)
         draw_text('Войти', small_font, DIRTY_WHITE, screen, sign_in_button.x + 83, sign_in_button.y + 9)
-        draw_text('Alpha v1.0', miles_font, DIRTY_WHITE, screen, 10, HEIGHT - 30)
+        draw_text(Version, miles_font, DIRTY_WHITE, screen, 10, HEIGHT - 30)
         login_text()
         # Обработка нажатий кнопок и их изменение
         mouse_pos = pygame.mouse.get_pos()
@@ -1160,6 +1171,9 @@ def settings_menu():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    main_menu()
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
                     if event.ui_element == difficulty_menu:
